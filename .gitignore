@@ -6,3 +6,6 @@ out
 .vercel
 next-env.d.ts
 *.tsbuildinfo
+
+# Third-party report data and generated research maps (not for redistribution)
+research/

@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { CircleMarker, MapContainer, Popup, TileLayer, useMap, useMapEvents } from "react-leaflet";
-import { CATEGORIES, type PublicReport } from "@/lib/types";
+import { CATEGORIES, VERIFICATION_LABELS, type PublicReport } from "@/lib/types";
 import { timeAgo } from "@/lib/format";
 
 interface Props {
@@ -32,10 +32,22 @@ function FlyTo({ target }: { target: Props["flyTo"] }) {
   return null;
 }
 
-/** Newer reports are more opaque so stale sightings fade out. */
-function opacityFor(iso: string) {
+const FRESH_HOURS = 72;
+
+/** Reports fade over their first 3 days; anything older stays as a faint ghost pin. */
+function ageStyle(iso: string) {
   const hours = (Date.now() - Date.parse(iso)) / 3_600_000;
-  return Math.max(0.25, 1 - hours / 12);
+  if (hours > FRESH_HOURS) return { opacity: 0.3, stale: true };
+  return { opacity: Math.max(0.45, 1 - (hours / FRESH_HOURS) * 0.55), stale: false };
+}
+
+function badgeText(r: PublicReport) {
+  if (r.source === "moderator") return "Verified by moderator";
+  if (r.source === "imported") {
+    const rating = r.verification ? ` · ${VERIFICATION_LABELS[r.verification]}` : "";
+    return `Via ${r.source_name ?? "another tracker"}${rating}`;
+  }
+  return "Community report (reviewed)";
 }
 
 export default function MapView({ reports, center, zoom, draft, picking, flyTo, onPick }: Props) {
@@ -43,36 +55,48 @@ export default function MapView({ reports, center, zoom, draft, picking, flyTo, 
     <MapContainer center={center} zoom={zoom} className={`map${picking ? " picking" : ""}`} zoomControl>
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
         maxZoom={19}
+        // OSM blocks tile requests with no Referer. The site-wide policy is no-referrer,
+        // so send just the origin (never the page path) for tiles only.
+        referrerPolicy="strict-origin-when-cross-origin"
       />
       <ClickToPick enabled={picking} onPick={onPick} />
       <FlyTo target={flyTo} />
 
       {reports.map((r) => {
         const cat = CATEGORIES[r.category];
-        const opacity = opacityFor(r.observed_at);
+        const { opacity, stale } = ageStyle(r.observed_at);
+        const sourceUrl = r.source_url && /^https?:\/\//i.test(r.source_url) ? r.source_url : null;
         return (
           <CircleMarker
             key={r.id}
             center={[r.lat, r.lng]}
-            radius={r.source === "moderator" ? 11 : 9}
+            radius={(r.source === "moderator" ? 11 : 9) - (stale ? 3 : 0)}
             pathOptions={{
               color: r.source === "moderator" ? "#111827" : "#ffffff",
-              weight: 2,
+              weight: stale ? 1 : 2,
               fillColor: cat.color,
               fillOpacity: opacity,
-              opacity,
+              opacity: stale ? 0.5 : opacity,
             }}
           >
             <Popup>
               <div className="popup">
                 <strong style={{ color: cat.color }}>{cat.label}</strong>
                 <div className="popup-meta">
-                  {timeAgo(r.observed_at)} · {new Date(r.observed_at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
+                  {timeAgo(r.observed_at)} ·{" "}
+                  {new Date(r.observed_at).toLocaleString([], stale
+                    ? { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }
+                    : { hour: "numeric", minute: "2-digit" })}
                 </div>
                 {r.description && <p>{r.description}</p>}
-                <span className={`badge ${r.source}`}>{r.source === "moderator" ? "Verified by moderator" : "Community report (reviewed)"}</span>
+                <span className={`badge ${r.source} ${r.verification ?? ""}`}>{badgeText(r)}</span>
+                {sourceUrl && (
+                  <a className="popup-source" href={sourceUrl} target="_blank" rel="noopener noreferrer">
+                    Source
+                  </a>
+                )}
               </div>
             </Popup>
           </CircleMarker>

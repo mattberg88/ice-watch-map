@@ -9,13 +9,15 @@ export const dynamic = "force-dynamic";
 
 const MAX_REPORTS_PER_HOUR = 5;
 
-// GET /api/reports?hours=12 — approved reports observed in the last N hours
+const MAX_HOURS = 30 * 24;
+
+// GET /api/reports?hours=12 — approved reports observed in the last N hours (up to 30 days)
 export async function GET(req: NextRequest) {
   const raw = Number(req.nextUrl.searchParams.get("hours") ?? 12);
-  const hours = Number.isFinite(raw) ? Math.min(Math.max(Math.round(raw), 1), 72) : 12;
+  const hours = Number.isFinite(raw) ? Math.min(Math.max(Math.round(raw), 1), MAX_HOURS) : 12;
 
   const rows = (await db()`
-    SELECT id, category, description, lat, lng, observed_at, source
+    SELECT id, category, description, lat, lng, observed_at, source, source_name, source_url, verification
     FROM reports
     WHERE status = 'approved' AND observed_at > now() - make_interval(hours => ${hours})
     ORDER BY observed_at DESC

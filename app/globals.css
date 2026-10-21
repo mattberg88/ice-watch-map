@@ -117,6 +117,9 @@ textarea { resize: vertical; }
 .popup-meta { font-size: 12px; color: #64748b; }
 .badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 999px; background: #e2e8f0; color: #334155; }
 .badge.moderator { background: #111827; color: #fff; }
+.badge.imported { background: #e0e7ff; color: #3730a3; }
+.badge.imported.confirmed { background: #fee2e2; color: #991b1b; }
+.popup-source { display: inline-block; margin-left: 8px; font-size: 12px; }
 
 .toast {
   position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 1000;

@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "db:migrate": "node --env-file-if-exists=.env.local scripts/migrate.mjs"
+    "db:migrate": "node --env-file-if-exists=.env.local scripts/migrate.mjs",
+    "db:import": "node --env-file-if-exists=.env.local scripts/import-reports.mjs"
   },
   "dependencies": {
     "@neondatabase/serverless": "1.2.0",

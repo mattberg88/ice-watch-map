@@ -4,10 +4,10 @@ A Next.js app for mapping reported ICE activity. Anyone can submit a sighting. M
 
 ## How it works
 
-- **Public map (`/`)**: shows approved reports from the last 2–72 hours, colored by category. Pins fade as they age, and pins verified by a moderator get a dark outline. The map refreshes every minute.
+- **Public map (`/`)**: shows approved reports from the last 2 hours to 30 days, colored by category. Pins fade over their first 3 days and older ones stay faint. Pins verified by a moderator get a dark outline, and reports imported from other trackers are labeled with their source and rating. The map refreshes every minute.
 - **Submitting**: tap **+ Report**, then tap the map or use **Use my location**, pick a category and time, and add optional details. Community reports go into a pending queue.
 - **Moderation (`/admin`)**: log in with the password, then approve, reject, unpublish or delete reports. While you're logged in, reports you submit from the map are published right away as "verified."
-- **Cleanup**: a daily Vercel Cron job deletes reports older than `RETENTION_DAYS` (7 by default), plus rejected reports and pending ones that sat in the queue.
+- **Cleanup**: a daily Vercel Cron job deletes reports whose activity is older than `RETENTION_DAYS` (30 by default), plus rejected reports and pending ones that sat in the queue.
 
 ### Built-in privacy and safety measures
 
@@ -42,6 +42,10 @@ cp .env.example .env.local   # fill in DATABASE_URL, ADMIN_PASSWORD, SESSION_SEC
 npm run db:migrate
 npm run dev
 ```
+
+## Importing reports from other trackers
+
+`npm run db:import -- <file.json>` publishes reports gathered elsewhere (StopICE, iceout.org, news). Each row needs `external_id`, `category`, `description`, `lat`, `lng`, `observed_at`, `verification` (`confirmed`, `sighting`, `unconfirmed` or `prior`), `source_name` and `source_url`. Rows are keyed on `external_id`, so re-running an import never creates duplicates. Run `npm run db:migrate` first to add the columns.
 
 ## Project layout
 

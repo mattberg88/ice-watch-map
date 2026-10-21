@@ -16,3 +16,14 @@ CREATE TABLE IF NOT EXISTS reports (
 
 CREATE INDEX IF NOT EXISTS reports_status_observed_idx ON reports (status, observed_at DESC);
 CREATE INDEX IF NOT EXISTS reports_ip_created_idx ON reports (ip_hash, created_at DESC);
+
+-- Reports imported from other trackers (StopICE, iceout.org, news), with attribution.
+ALTER TABLE reports ADD COLUMN IF NOT EXISTS source_name text;
+ALTER TABLE reports ADD COLUMN IF NOT EXISTS source_url text;
+ALTER TABLE reports ADD COLUMN IF NOT EXISTS verification text
+  CHECK (verification IN ('confirmed', 'sighting', 'unconfirmed', 'prior'));
+-- Stable key per imported incident so re-running the import never duplicates it.
+ALTER TABLE reports ADD COLUMN IF NOT EXISTS external_id text;
+CREATE UNIQUE INDEX IF NOT EXISTS reports_external_id_idx ON reports (external_id);
+ALTER TABLE reports DROP CONSTRAINT IF EXISTS reports_source_check;
+ALTER TABLE reports ADD CONSTRAINT reports_source_check CHECK (source IN ('community', 'moderator', 'imported'));

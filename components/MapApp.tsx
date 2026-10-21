@@ -12,7 +12,14 @@ const MapView = dynamic(() => import("./MapView"), {
   loading: () => <div className="map map-loading">Loading map…</div>,
 });
 
-const WINDOWS = [2, 6, 12, 24, 72];
+const WINDOWS = [
+  { hours: 2, label: "2 hours" },
+  { hours: 12, label: "12 hours" },
+  { hours: 24, label: "24 hours" },
+  { hours: 72, label: "3 days" },
+  { hours: 168, label: "7 days" },
+  { hours: 720, label: "30 days" },
+];
 const REFRESH_MS = 60_000;
 
 interface Props {
@@ -25,7 +32,7 @@ interface Props {
 
 export default function MapApp({ appName, center, zoom, hotlineLabel, hotlineNumber }: Props) {
   const [reports, setReports] = useState<PublicReport[]>([]);
-  const [hours, setHours] = useState(12);
+  const [hours, setHours] = useState(720);
   const [loadError, setLoadError] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
@@ -106,7 +113,7 @@ export default function MapApp({ appName, center, zoom, hotlineLabel, hotlineNum
       <header className="topbar">
         <div className="brand">
           <h1>{appName}</h1>
-          <span className="sub">Moderator-reviewed community reports</span>
+          <span className="sub">Community reports and other trackers</span>
         </div>
         {hotlineNumber && (
           <a className="hotline" href={`tel:${hotlineNumber.replace(/[^\d+]/g, "")}`}>
@@ -143,9 +150,9 @@ export default function MapApp({ appName, center, zoom, hotlineLabel, hotlineNum
                 <label className="window">
                   Show last
                   <select value={hours} onChange={(e) => setHours(Number(e.target.value))}>
-                    {WINDOWS.map((h) => (
-                      <option key={h} value={h}>
-                        {h} hours
+                    {WINDOWS.map((w) => (
+                      <option key={w.hours} value={w.hours}>
+                        {w.label}
                       </option>
                     ))}
                   </select>
@@ -173,8 +180,9 @@ export default function MapApp({ appName, center, zoom, hotlineLabel, hotlineNum
 
               <div className="notice">
                 <strong>Stay safe.</strong> Keep your distance, don&apos;t interfere with officers, and don&apos;t share
-                anyone&apos;s identity. Faded pins are older. Reports can be wrong. Pins with a dark outline were verified by a
-                moderator.
+                anyone&apos;s identity. Pins fade over 3 days, and older ones stay faint. Reports can be wrong. Pins with a dark
+                outline were verified by a moderator. Reports from other trackers (StopICE, iceout.org, news) are labeled
+                with their source and haven&apos;t been checked by us.
               </div>
 
               <footer className="foot">

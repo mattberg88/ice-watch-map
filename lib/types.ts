@@ -10,7 +10,15 @@ export type Category = keyof typeof CATEGORIES;
 export const CATEGORY_KEYS = Object.keys(CATEGORIES) as [Category, ...Category[]];
 
 export type ReportStatus = "pending" | "approved" | "rejected";
-export type ReportSource = "community" | "moderator";
+export type ReportSource = "community" | "moderator" | "imported";
+export type Verification = "confirmed" | "sighting" | "unconfirmed" | "prior";
+
+export const VERIFICATION_LABELS: Record<Verification, string> = {
+  confirmed: "Confirmed",
+  sighting: "Sighting",
+  unconfirmed: "Unconfirmed",
+  prior: "Earlier incident",
+};
 
 export interface Report {
   id: string;
@@ -22,6 +30,10 @@ export interface Report {
   created_at: string;
   status: ReportStatus;
   source: ReportSource;
+  /** Set for imported reports: which tracker it came from and how that tracker rated it. */
+  source_name: string | null;
+  source_url: string | null;
+  verification: Verification | null;
 }
 
 /** Public reports omit moderation fields. */
