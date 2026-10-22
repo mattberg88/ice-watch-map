@@ -7,7 +7,7 @@ import "@maplibre/maplibre-gl-leaflet";
 import { CircleMarker, MapContainer, Pane, Polyline, Popup, useMap } from "react-leaflet";
 import { CATEGORIES, type PublicReport } from "@/lib/types";
 import { agoText, useT, type Dict, type Lang } from "@/lib/i18n";
-import { basemapUrl, categoryColor, loadBasemapStyle, type ThemeId } from "@/lib/themes";
+import { basemapUrl, categoryColor, fallbackTileUrls, loadBasemapStyle, type ThemeId } from "@/lib/themes";
 import { PIN_PANES, pinPane } from "@/lib/sources";
 
 interface Props {
@@ -33,6 +33,7 @@ setWorkerUrl("/maplibre/maplibre-gl-worker.mjs");
 function Basemap({ style }: { style: ThemeId }) {
   const map = useMap();
   const layerRef = useRef<L.MaplibreGL | null>(null);
+  const rasterRef = useRef<{ base: L.TileLayer; labels: L.TileLayer } | null>(null);
   const styleRef = useRef(style);
   styleRef.current = style;
 
@@ -48,16 +49,23 @@ function Basemap({ style }: { style: ThemeId }) {
       layer.addTo(map);
       layerRef.current = layer;
     } catch (e) {
-      // Fall back to plain OpenStreetMap tiles so the pins still show.
+      // Fall back to raster tiles so the pins still show.
       console.warn("Vector basemap unavailable, using raster tiles:", e);
       try {
         if (map.hasLayer(layer)) map.removeLayer(layer);
       } catch {} // a half-initialized GL layer can throw on removal
-      base = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        maxZoom: 19,
-        referrerPolicy: "strict-origin-when-cross-origin",
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors',
-      }).addTo(map);
+      const urls = fallbackTileUrls(styleRef.current);
+      const options: L.TileLayerOptions = { maxNativeZoom: 16, maxZoom: 20, referrerPolicy: "strict-origin-when-cross-origin" };
+      const raster = {
+        base: L.tileLayer(urls.base, {
+          ...options,
+          attribution:
+            'Esri, HERE, Garmin, &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors',
+        }),
+        labels: L.tileLayer(urls.labels, options),
+      };
+      rasterRef.current = raster;
+      base = L.layerGroup([raster.base, raster.labels]).addTo(map);
     }
     // Leaflet doesn't notice container resizes (phone rotation, panel changes), which leaves the GL canvas half drawn.
     const resize = new ResizeObserver(() => map.invalidateSize());
@@ -65,6 +73,7 @@ function Basemap({ style }: { style: ThemeId }) {
     return () => {
       resize.disconnect();
       layerRef.current = null;
+      rasterRef.current = null;
       try {
         map.removeLayer(base);
       } catch {}
@@ -73,6 +82,11 @@ function Basemap({ style }: { style: ThemeId }) {
 
   useEffect(() => {
     // Swapping the style is cheaper and safer than removing and re-adding the GL layer.
+    if (rasterRef.current) {
+      const urls = fallbackTileUrls(style);
+      rasterRef.current.base.setUrl(urls.base);
+      rasterRef.current.labels.setUrl(urls.labels);
+    }
     let cancelled = false;
     loadBasemapStyle(style).then((resolved) => {
       if (!cancelled) layerRef.current?.getMaplibreMap()?.setStyle(resolved as never);

@@ -22,6 +22,19 @@ export function basemapUrl(theme: ThemeId) {
   return `https://tiles.openfreemap.org/styles/${t.basemap}`;
 }
 
+/**
+ * Raster tiles for browsers without WebGL2: Esri's gray canvas basemaps, which have no terrain or peak
+ * symbols. A base layer plus a labels layer, dark or light to match the theme. Tiles stop at zoom 16 and are
+ * scaled up past that.
+ */
+export function fallbackTileUrls(theme: ThemeId) {
+  const t = THEMES.find((x) => x.id === theme) ?? THEMES.find((x) => x.id === DEFAULT_THEME)!;
+  const tone = t.basemap === "dark" || t.basemap === "fiord" ? "Dark" : "Light";
+  const url = (part: string) =>
+    `https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_${tone}_Gray_${part}/MapServer/tile/{z}/{y}/{x}`;
+  return { base: url("Base"), labels: url("Reference") };
+}
+
 type Paint = Record<string, unknown>;
 
 /**
