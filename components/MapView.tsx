@@ -40,15 +40,34 @@ function Basemap({ style }: { style: ThemeId }) {
     const layer = L.maplibreGL({ style: basemapUrl(styleRef.current) });
     layer.options.attribution =
       '<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> &copy; <a href="https://www.openmaptiles.org/" target="_blank" rel="noopener">OpenMapTiles</a> Data from <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>';
-    layer.addTo(map);
-    layerRef.current = layer;
+    let base: L.Layer = layer;
+    try {
+      // MapLibre needs WebGL2, which some computers have turned off (no hardware acceleration, blocked
+      // graphics drivers) and older browsers lack. Without it, adding the layer throws and takes the page down.
+      if (!document.createElement("canvas").getContext("webgl2")) throw new Error("WebGL2 unavailable");
+      layer.addTo(map);
+      layerRef.current = layer;
+    } catch (e) {
+      // Fall back to plain OpenStreetMap tiles so the pins still show.
+      console.warn("Vector basemap unavailable, using raster tiles:", e);
+      try {
+        if (map.hasLayer(layer)) map.removeLayer(layer);
+      } catch {} // a half-initialized GL layer can throw on removal
+      base = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+        referrerPolicy: "strict-origin-when-cross-origin",
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors',
+      }).addTo(map);
+    }
     // Leaflet doesn't notice container resizes (phone rotation, panel changes), which leaves the GL canvas half drawn.
     const resize = new ResizeObserver(() => map.invalidateSize());
     resize.observe(map.getContainer());
     return () => {
       resize.disconnect();
       layerRef.current = null;
-      map.removeLayer(layer);
+      try {
+        map.removeLayer(base);
+      } catch {}
     };
   }, [map]);
 

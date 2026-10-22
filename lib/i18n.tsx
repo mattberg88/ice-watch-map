@@ -19,6 +19,7 @@ const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one :
 const en = {
   subtitle: "Community reports and other trackers",
   loadingMap: "Loading map…",
+  mapError: "The map couldn't load in this browser. Try updating it or turning on hardware acceleration. The hotlines and rights info still work.",
   showLast: "Show last",
   windowLabel: (hours: number, label: string | null) => label ?? rangeLabel("en", hours),
   windowStops: ["2 hours", "12 hours", "24 hours", "3 days", "7 days", "14 days", "30 days", "90 days", "6 months", "1 year", "All (since May 2025)"],
@@ -82,6 +83,7 @@ const en = {
 const es: typeof en = {
   subtitle: "Reportes de la comunidad y otros rastreadores",
   loadingMap: "Cargando el mapa…",
+  mapError: "El mapa no pudo cargar en este navegador. Intente actualizarlo o activar la aceleración por hardware. Las líneas de ayuda y la información de derechos siguen funcionando.",
   showLast: "Mostrar últimos",
   windowLabel: (hours: number, label: string | null) => label ?? rangeLabel("es", hours),
   windowStops: ["2 horas", "12 horas", "24 horas", "3 días", "7 días", "14 días", "30 días", "90 días", "6 meses", "1 año", "Todo (desde mayo de 2025)"],

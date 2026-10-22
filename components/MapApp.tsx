@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { useCallback, useEffect, useState } from "react";
 import ReportHelp from "./ReportHelp";
 import KnowYourRights from "./KnowYourRights";
+import MapErrorBoundary from "./MapErrorBoundary";
 import { CATEGORY_KEYS, type PublicReport } from "@/lib/types";
 import { DICTS, LANGS, LangContext, agoText, type Dict, type Lang } from "@/lib/i18n";
 import { DEFAULT_THEME, THEMES, categoryColor, type ThemeId } from "@/lib/themes";
@@ -208,12 +209,14 @@ export default function MapApp({ appName, center, zoom, hotlineLabel, hotlineNum
       </p>
 
       <main className="main">
-        <MapView
-          reports={visible}
-          center={center}
-          zoom={zoom}
-          basemap={theme}
-        />
+        <MapErrorBoundary message={t.mapError}>
+          <MapView
+            reports={visible}
+            center={center}
+            zoom={zoom}
+            basemap={theme}
+          />
+        </MapErrorBoundary>
 
         <aside className="panel">
           {helpOpen ? (
