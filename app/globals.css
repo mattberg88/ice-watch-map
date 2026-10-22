@@ -89,6 +89,7 @@ textarea { resize: vertical; }
 .window input[type="range"] { padding: 0; border: none; background: none; accent-color: var(--primary); height: 24px; }
 .window-ends { display: flex; justify-content: space-between; font-size: 11px; }
 .status { margin: 0; font-size: 13px; color: var(--muted); }
+.disclaimer { margin: 0; font-size: 12px; line-height: 1.4; color: var(--muted); border-left: 3px solid var(--border); padding-left: 8px; }
 
 .legend { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 .legend li { display: flex; align-items: center; gap: 8px; }
