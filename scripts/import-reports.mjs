@@ -1,7 +1,7 @@
 // Publishes reports gathered from other trackers (see research/build_map.py).
 // Usage: npm run db:import -- research/import.json [--prune]   (reads .env.local if present)
 // --prune deletes previously imported reports that are no longer in the file.
-// Each row: { external_id, category, description, lat, lng, observed_at, verification, source_name, source_url, related_key, location_approximate }
+// Each row: { external_id, category, description, lat, lng, observed_at, verification, source_name, source_url, related_key, location_approximate, report_count }
 // Rows already imported are updated in place, so re-running picks up corrected text or new links.
 import { readFile } from "node:fs/promises";
 import { neon } from "@neondatabase/serverless";
@@ -33,15 +33,18 @@ for (const r of rows) {
   const sourceUrl = /^https?:\/\//i.test(r.source_url ?? "") ? r.source_url : null;
   const result = await sql`
     INSERT INTO reports (category, description, lat, lng, observed_at, status, source, reviewed_at,
-                         source_name, source_url, verification, external_id, related_key, location_approximate)
+                         source_name, source_url, verification, external_id, related_key, location_approximate, report_count)
     VALUES (${r.category}, ${String(r.description ?? "").slice(0, 500)}, ${round(r.lat)}, ${round(r.lng)},
             ${r.observed_at}, 'approved', 'imported', now(),
             ${String(r.source_name ?? "").slice(0, 120)}, ${sourceUrl}, ${verification}, ${r.external_id},
-            ${r.related_key ? String(r.related_key).slice(0, 80) : null}, ${r.location_approximate === true})
+            ${r.related_key ? String(r.related_key).slice(0, 80) : null}, ${r.location_approximate === true},
+            ${Math.max(1, Math.round(Number(r.report_count) || 1))})
     ON CONFLICT (external_id) DO UPDATE SET
       category = EXCLUDED.category, description = EXCLUDED.description, verification = EXCLUDED.verification,
       source_name = EXCLUDED.source_name, source_url = EXCLUDED.source_url, related_key = EXCLUDED.related_key,
-      lat = EXCLUDED.lat, lng = EXCLUDED.lng, location_approximate = EXCLUDED.location_approximate
+      lat = EXCLUDED.lat, lng = EXCLUDED.lng, location_approximate = EXCLUDED.location_approximate,
+      -- The build counts every merged report it has, so its count replaces the hourly sync's increments.
+      report_count = EXCLUDED.report_count
     RETURNING (xmax = 0) AS inserted
   `;
   result[0].inserted ? inserted++ : updated++;

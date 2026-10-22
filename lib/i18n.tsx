@@ -44,12 +44,14 @@ const en = {
   unconfirmedLabel: "Unconfirmed",
   older: "Older than 7 days",
   related: "Related incidents",
+  glow: "Brighter glow: more reports",
   timeAgo: (mins: number) =>
     mins < 1 ? "just now" : mins < 60 ? `${mins} min ago` : mins < 1440 ? `${Math.floor(mins / 60)} hr ago` : `${Math.floor(mins / 1440)} d ago`,
   // Popups
   approx: "Location may not be accurate. Check the source for the reported location.",
   source: "Source",
   relatedHeading: "Related",
+  reportCount: (n: number) => `${n} reports from this area around the same time`,
   verification: { confirmed: "Confirmed", sighting: "Sighting", unconfirmed: "Unconfirmed", prior: "Earlier incident" } as Record<Verification, string>,
   via: (name: string) => `Via ${name}`,
   anotherTracker: "another tracker",
@@ -104,11 +106,13 @@ const es: typeof en = {
   unconfirmedLabel: "No confirmado",
   older: "Más de 7 días",
   related: "Incidentes relacionados",
+  glow: "Brillo más fuerte: más reportes",
   timeAgo: (mins: number) =>
     mins < 1 ? "ahora mismo" : mins < 60 ? `hace ${mins} min` : mins < 1440 ? `hace ${Math.floor(mins / 60)} h` : `hace ${Math.floor(mins / 1440)} d`,
   approx: "Es posible que la ubicación no sea exacta. Consulte la fuente para ver la ubicación reportada.",
   source: "Fuente",
   relatedHeading: "Relacionado",
+  reportCount: (n: number) => `${n} reportes de esta zona a la misma hora`,
   verification: { confirmed: "Confirmado", sighting: "Avistamiento", unconfirmed: "No confirmado", prior: "Incidente anterior" },
   via: (name: string) => `Vía ${name}`,
   anotherTracker: "otro rastreador",

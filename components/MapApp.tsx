@@ -321,6 +321,10 @@ export default function MapApp({ appName, center, zoom, hotlineLabel, hotlineNum
                   {t.older}
                 </li>
                 <li className="legend-key">
+                  <span className="dot glow" />
+                  {t.glow}
+                </li>
+                <li className="legend-key">
                   <span className="line" />
                   {t.related}
                 </li>

@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
   const hours = Number.isFinite(raw) ? Math.min(Math.max(Math.round(raw), 1), MAX_HOURS) : 12;
 
   const rows = (await db()`
-    SELECT id, category, description, lat, lng, observed_at, source, source_name, source_url, verification, related_key, location_approximate
+    SELECT id, category, description, lat, lng, observed_at, source, source_name, source_url, verification, related_key, location_approximate, report_count
     FROM reports
     WHERE status = 'approved' AND observed_at > now() - make_interval(hours => ${hours})
     ORDER BY observed_at DESC

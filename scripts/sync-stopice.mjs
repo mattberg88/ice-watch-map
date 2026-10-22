@@ -232,7 +232,7 @@ const existing = await sql`
 `;
 const skipped = new Set((await sql`SELECT external_id FROM import_skips`).map((r) => r.external_id));
 const seenUrls = new Set(existing.map((r) => r.source_url));
-const placed = existing.map((r) => ({ lat: r.lat, lng: r.lng, t: Date.parse(r.observed_at) }));
+const placed = existing.map((r) => ({ lat: r.lat, lng: r.lng, t: Date.parse(r.observed_at), externalId: r.external_id }));
 
 let published = 0;
 const skips = [];
@@ -254,7 +254,18 @@ for (const a of candidates) {
   const t = Date.parse(a.observedAt);
   const duplicate = !RECHECK && placed.find((p) => Math.abs(p.t - t) <= 6 * 3_600_000 && meters(p, where) <= 400);
   if (duplicate) {
-    skips.push([externalId, "duplicate of a report already on the map"]);
+    // Another report of something already on the map: count it so the pin glows brighter.
+    console.log(`${DRY_RUN ? "[dry run] " : ""}duplicate of ${duplicate.externalId}, counting it: ${scrub(text).slice(0, 90)}`);
+    if (DRY_RUN) continue;
+    // Recording the skip and counting it in one statement means a failed run can't count the same alert twice.
+    await sql`
+      WITH skip AS (
+        INSERT INTO import_skips (external_id, reason) VALUES (${externalId}, 'duplicate of a report already on the map')
+        ON CONFLICT DO NOTHING RETURNING 1
+      )
+      UPDATE reports SET report_count = report_count + 1
+      WHERE external_id = ${duplicate.externalId ?? null} AND EXISTS (SELECT 1 FROM skip)
+    `;
     continue;
   }
 
@@ -279,7 +290,7 @@ for (const a of candidates) {
       ON CONFLICT (external_id) DO NOTHING
     `;
   }
-  placed.push({ lat: row.lat, lng: row.lng, t });
+  placed.push({ lat: row.lat, lng: row.lng, t, externalId });
   seenUrls.add(a.url);
   published++;
 }

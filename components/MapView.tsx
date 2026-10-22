@@ -118,6 +118,18 @@ function pinStyle(kind: "confirmed" | "reported" | "unconfirmed", color: string,
   };
 }
 
+/**
+ * Soft glow rings for pins that stand for several merged reports: more reports, a wider and brighter glow
+ * (capped at 4). Three stacked translucent circles read as a gradient. Confirmed single reports keep their halo.
+ */
+function glowRings(count: number, confirmed: boolean, radius: number, stale: boolean) {
+  const level = Math.min(Math.max(count, 1), 4) - 1;
+  if (level === 0) return confirmed ? [{ radius: radius + 6, opacity: stale ? 0.15 : 0.25 }] : [];
+  const fade = stale ? 0.55 : 1;
+  const reach = 6 + level * 6;
+  return [1, 2 / 3, 1 / 3].map((f) => ({ radius: radius + reach * f, opacity: (0.16 + 0.08 * level) * fade }));
+}
+
 function badgeText(r: PublicReport, t: Dict) {
   if (r.source === "moderator") return t.verifiedByModerator;
   if (r.source === "imported") {
@@ -171,15 +183,16 @@ export default function MapView({ reports, center, zoom, basemap }: Props) {
         const style = pinStyle(confirmed ? "confirmed" : unconfirmed ? "unconfirmed" : "reported", cat.color, opacity, stale);
         return (
           <Fragment key={r.id}>
-            {confirmed && (
+            {glowRings(r.report_count, confirmed, style.radius, stale).map((g, i) => (
               <CircleMarker
+                key={i}
                 center={[r.lat, r.lng]}
-                radius={style.radius + 6}
+                radius={g.radius}
                 pane={pane}
                 interactive={false}
-                pathOptions={{ stroke: false, fillColor: cat.color, fillOpacity: stale ? 0.15 : 0.25 }}
+                pathOptions={{ stroke: false, fillColor: cat.color, fillOpacity: g.opacity, className: "pin-glow" }}
               />
-            )}
+            ))}
           <CircleMarker
             center={[r.lat, r.lng]}
             radius={style.radius}
@@ -198,6 +211,7 @@ export default function MapView({ reports, center, zoom, basemap }: Props) {
                   <div className="popup-approx">{t.approx}</div>
                 )}
                 {r.description && <p>{r.description}</p>}
+                {r.report_count > 1 && <div className="popup-count">{t.reportCount(r.report_count)}</div>}
                 <span className={`badge ${r.source} ${r.verification ?? ""}`}>{badgeText(r, t)}</span>
                 {sourceUrl && (
                   <a className="popup-source" href={sourceUrl} target="_blank" rel="noopener noreferrer">

@@ -32,6 +32,8 @@ export interface Report {
   related_key: string | null;
   /** The pin is a best guess from a city, ZIP or street; the source link has the original wording. */
   location_approximate: boolean;
+  /** Reports merged into this pin because they came from the same place around the same time. */
+  report_count: number;
 }
 
 /** Public reports omit moderation fields. */
