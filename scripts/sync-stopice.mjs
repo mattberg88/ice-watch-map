@@ -49,7 +49,8 @@ const ARREST_EVENT = new RegExp(
   String.raw`\b(arrested|detained|detaining|kidnapped|kidnapping (a|an|someone|people)|tackled|apprehended|abducted` +
     String.raw`|took (a|an|someone|him|her|them|\d+|two|three|four|five)\b|taken into custody|in (ice )?custody|picked up` +
     String.raw`|arrests? (happening|in progress|made|being made)|arresting|detention of|is being detained|were detained` +
-    String.raw`|holding a patient|guarding a patient|hostage)\b`,
+    String.raw`|holding a patient|guarding a patient|hostage` +
+    String.raw`|(an|one|two|three|confirmed|reported|another|the|workplace) arrests?|arrests? (at|outside|in|of|near))\b`,
 );
 
 function categoryFor(text) {

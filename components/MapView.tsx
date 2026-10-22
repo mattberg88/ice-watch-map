@@ -17,6 +17,13 @@ interface Props {
   basemap: ThemeId;
 }
 
+// Keep the map on the Bay Area: no zooming out past the region or panning away from it.
+const BAY_AREA_BOUNDS: [[number, number], [number, number]] = [
+  [36.85, -123.25],
+  [38.6, -121.4],
+];
+const MIN_ZOOM = 9;
+
 // Copied into public/ by scripts/copy-maplibre-worker.mjs; the bundler can't serve it.
 setWorkerUrl("/maplibre/maplibre-gl-worker.mjs");
 
@@ -95,7 +102,15 @@ function badgeText(r: PublicReport) {
 export default function MapView({ reports, center, zoom, basemap }: Props) {
   const groups = useMemo(() => relatedGroups(reports), [reports]);
   return (
-    <MapContainer center={center} zoom={zoom} className="map" zoomControl>
+    <MapContainer
+      center={center}
+      zoom={Math.max(zoom, MIN_ZOOM)}
+      minZoom={MIN_ZOOM}
+      maxBounds={BAY_AREA_BOUNDS}
+      maxBoundsViscosity={1}
+      className="map"
+      zoomControl
+    >
       <Basemap style={basemap} />
 
       {[...groups].map(([key, list]) =>
