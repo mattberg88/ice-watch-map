@@ -47,6 +47,15 @@ npm run dev
 
 `npm run db:import -- <file.json>` publishes reports gathered elsewhere (StopICE, iceout.org, news). Each row needs `external_id`, `category`, `description`, `lat`, `lng`, `observed_at`, `verification` (`confirmed`, `sighting`, `unconfirmed` or `prior`), `source_name` and `source_url`. Rows are keyed on `external_id`, so re-running an import never creates duplicates. Run `npm run db:migrate` first to add the columns.
 
+## Automatic updates
+
+`.github/workflows/sync-reports.yml` runs `scripts/sync-stopice.mjs` every hour. It pulls recent Bay Area StopICE alerts, uses each alert page's original text (the export strips punctuation), removes plates, VINs, phone numbers and emails, checks the written location against OpenStreetMap, skips anything already on the map, and publishes the rest with their source link. Add these repository secrets under **Settings → Secrets and variables → Actions**:
+
+- `DATABASE_URL`: the same Neon connection string Vercel uses
+- `STOPICE_API_KEY` (optional): with it the sync uses StopICE's real-time API; without it, their nightly export
+
+Test locally with `node --env-file-if-exists=.env.local scripts/sync-stopice.mjs --dry-run`.
+
 ## Project layout
 
 ```

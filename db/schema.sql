@@ -34,3 +34,11 @@ CREATE INDEX IF NOT EXISTS reports_related_key_idx ON reports (related_key);
 
 -- True when the pin is a best guess (only a city, ZIP or street was given). The map labels these.
 ALTER TABLE reports ADD COLUMN IF NOT EXISTS location_approximate boolean NOT NULL DEFAULT false;
+
+-- Alerts the hourly sync looked at and deliberately left out (outside the Bay Area, duplicates), so it
+-- doesn't re-check them every run.
+CREATE TABLE IF NOT EXISTS import_skips (
+  external_id text PRIMARY KEY,
+  reason      text NOT NULL,
+  created_at  timestamptz NOT NULL DEFAULT now()
+);

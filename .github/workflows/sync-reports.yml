@@ -1,0 +1,36 @@
+name: Sync reports
+
+# Pulls new Bay Area reports from StopICE every hour and publishes them (scripts/sync-stopice.mjs).
+# Needs repository secrets: DATABASE_URL (required) and STOPICE_API_KEY (optional; falls back to the nightly export).
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: sync-reports
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Apply schema changes
+        run: npm run db:migrate
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      - name: Sync StopICE
+        run: node scripts/sync-stopice.mjs
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          STOPICE_API_KEY: ${{ secrets.STOPICE_API_KEY }}
