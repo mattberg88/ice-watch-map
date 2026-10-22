@@ -271,3 +271,14 @@ textarea { resize: vertical; }
 .stopice p { margin: 0 0 8px; font-size: 13px; color: var(--muted); }
 .stopice-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .stopice-actions .btn { text-decoration: none; font-size: 13px; padding: 7px 12px; }
+
+/* Source filter */
+.sources { display: flex; flex-direction: column; gap: 6px; }
+.sources-label { font-size: 12px; color: var(--muted); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; cursor: pointer;
+  font: 600 12px/1.4 inherit; color: var(--text); background: var(--surface); border: 1px solid var(--primary);
+}
+.chip .chip-count { color: var(--muted); font-weight: 500; font-variant-numeric: tabular-nums; }
+.chip.off { border-color: var(--border); color: var(--muted); text-decoration: line-through; opacity: 0.7; }

@@ -52,6 +52,19 @@ function nearestStop(hours: number) {
   return best;
 }
 
+const SOURCE_ORDER = ["StopICE", "Mission Local", "People Over Papers", "News"];
+
+/** Groups a report's source(s) for the filter: "Mission Local + StopICE" belongs to both. */
+function sourceGroups(r: PublicReport): string[] {
+  if (r.source !== "imported" || !r.source_name) return ["This site"];
+  return r.source_name.split(" + ").map((name) => {
+    if (name.startsWith("StopICE")) return "StopICE";
+    if (name.startsWith("News")) return "News";
+    if (name.startsWith("People Over Papers")) return "People Over Papers";
+    return name;
+  });
+}
+
 /** "in the last 30 days" / "since May 2025", for the count under the slider. */
 function rangePhrase(hours: number) {
   if (hours >= MAX_HOURS) return "since May 2025";
@@ -89,6 +102,7 @@ export default function MapApp({ appName, center, zoom, hotlineLabel, hotlineNum
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   // Reports are made to county hotlines, not on this site.
   const [helpOpen, setHelpOpen] = useState(false);
+  const [hiddenSources, setHiddenSources] = useState<Set<string>>(new Set());
 
   const load = useCallback(async () => {
     try {
@@ -141,7 +155,21 @@ export default function MapApp({ appName, center, zoom, hotlineLabel, hotlineNum
     setShowStylePicker(params.has("styles") || params.has("style"));
   }, []);
 
-  const counts = CATEGORY_KEYS.map((key) => ({ key, n: reports.filter((r) => r.category === key).length }));
+  // Source filter: everything is shown unless its source group is switched off.
+  const sourceCounts = new Map<string, number>();
+  for (const r of reports) for (const g of sourceGroups(r)) sourceCounts.set(g, (sourceCounts.get(g) ?? 0) + 1);
+  const visible = reports.filter((r) => sourceGroups(r).some((g) => !hiddenSources.has(g)));
+
+  function toggleSource(group: string) {
+    setHiddenSources((prev) => {
+      const next = new Set(prev);
+      if (next.has(group)) next.delete(group);
+      else next.add(group);
+      return next;
+    });
+  }
+
+  const counts = CATEGORY_KEYS.map((key) => ({ key, n: visible.filter((r) => r.category === key).length }));
 
   return (
     <div className="app" data-theme={theme}>
@@ -160,7 +188,7 @@ export default function MapApp({ appName, center, zoom, hotlineLabel, hotlineNum
 
       <main className="main">
         <MapView
-          reports={reports}
+          reports={visible}
           center={center}
           zoom={zoom}
           basemap={theme}
@@ -219,8 +247,28 @@ export default function MapApp({ appName, center, zoom, hotlineLabel, hotlineNum
               <p className="status" title={lastUpdated ? `Data last updated ${new Date(lastUpdated).toLocaleString()}` : undefined}>
                 {loadError
                   ? "Couldn't load reports. Retrying…"
-                  : `${reports.length} incident${reports.length === 1 ? "" : "s"} ${rangePhrase(hours)}${lastUpdated ? ` · data updated ${timeAgo(lastUpdated)}` : ""}`}
+                  : `${visible.length} incident${visible.length === 1 ? "" : "s"} ${rangePhrase(hours)}${lastUpdated ? ` · data updated ${timeAgo(lastUpdated)}` : ""}`}
               </p>
+
+              {sourceCounts.size > 0 && (
+                <div className="sources" role="group" aria-label="Filter by source">
+                  <span className="sources-label">Sources</span>
+                  <div className="chips">
+                    {SOURCE_ORDER.filter((g) => sourceCounts.has(g))
+                      .concat([...sourceCounts.keys()].filter((g) => !SOURCE_ORDER.includes(g)))
+                      .map((g) => (
+                        <button
+                          key={g}
+                          className={`chip${hiddenSources.has(g) ? " off" : ""}`}
+                          aria-pressed={!hiddenSources.has(g)}
+                          onClick={() => toggleSource(g)}
+                        >
+                          {g} <span className="chip-count">{sourceCounts.get(g)}</span>
+                        </button>
+                      ))}
+                  </div>
+                </div>
+              )}
 
               <ul className="legend">
                 {counts.map(({ key, n }) => (
