@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "leaflet/dist/leaflet.css";
+import "maplibre-gl/dist/maplibre-gl.css";
 import "./globals.css";
 
 const appName = process.env.NEXT_PUBLIC_APP_NAME || "Community Watch Map";

@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect } from "react";
-import { CircleMarker, MapContainer, Popup, TileLayer, useMap, useMapEvents } from "react-leaflet";
+import L from "leaflet";
+import { setWorkerUrl } from "maplibre-gl";
+import "@maplibre/maplibre-gl-leaflet";
+import { CircleMarker, MapContainer, Popup, useMap, useMapEvents } from "react-leaflet";
 import { CATEGORIES, VERIFICATION_LABELS, type PublicReport } from "@/lib/types";
 import { timeAgo } from "@/lib/format";
 
@@ -21,6 +24,24 @@ function ClickToPick({ enabled, onPick }: { enabled: boolean; onPick: Props["onP
       if (enabled) onPick(e.latlng.lat, e.latlng.lng);
     },
   });
+  return null;
+}
+
+// Copied into public/ by scripts/copy-maplibre-worker.mjs; the bundler can't serve it.
+setWorkerUrl("/maplibre/maplibre-gl-worker.mjs");
+
+/** OpenFreeMap's muted Positron style: free, no API key, and no terrain or POI symbols. */
+function Basemap() {
+  const map = useMap();
+  useEffect(() => {
+    const layer = L.maplibreGL({ style: "https://tiles.openfreemap.org/styles/positron" });
+    layer.options.attribution =
+      '<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> &copy; <a href="https://www.openmaptiles.org/" target="_blank" rel="noopener">OpenMapTiles</a> Data from <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>';
+    layer.addTo(map);
+    return () => {
+      map.removeLayer(layer);
+    };
+  }, [map]);
   return null;
 }
 
@@ -53,16 +74,7 @@ function badgeText(r: PublicReport) {
 export default function MapView({ reports, center, zoom, draft, picking, flyTo, onPick }: Props) {
   return (
     <MapContainer center={center} zoom={zoom} className={`map${picking ? " picking" : ""}`} zoomControl>
-      <TileLayer
-        attribution='&copy; <a href="https://stadiamaps.com/">Stadia Maps</a> &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        // A muted style without terrain symbols. Works on localhost; production domains must be
-        // registered (free) in the Stadia Maps dashboard.
-        url="https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png"
-        maxZoom={20}
-        // Stadia authorizes by domain. The site-wide policy is no-referrer,
-        // so send just the origin (never the page path) for tiles only.
-        referrerPolicy="strict-origin-when-cross-origin"
-      />
+      <Basemap />
       <ClickToPick enabled={picking} onPick={onPick} />
       <FlyTo target={flyTo} />
 

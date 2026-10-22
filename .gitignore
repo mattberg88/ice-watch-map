@@ -9,3 +9,6 @@ next-env.d.ts
 
 # Third-party report data and generated research maps (not for redistribution)
 research/
+
+# Copied from node_modules on install (scripts/copy-maplibre-worker.mjs)
+public/maplibre/
