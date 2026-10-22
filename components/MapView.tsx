@@ -5,8 +5,8 @@ import L from "leaflet";
 import { setWorkerUrl } from "maplibre-gl";
 import "@maplibre/maplibre-gl-leaflet";
 import { CircleMarker, MapContainer, Pane, Polyline, Popup, useMap } from "react-leaflet";
-import { CATEGORIES, VERIFICATION_LABELS, type PublicReport } from "@/lib/types";
-import { timeAgo } from "@/lib/format";
+import { CATEGORIES, type PublicReport } from "@/lib/types";
+import { agoText, useT, type Dict, type Lang } from "@/lib/i18n";
 import { basemapUrl, categoryColor, loadBasemapStyle, type ThemeId } from "@/lib/themes";
 import { PIN_PANES, pinPane } from "@/lib/sources";
 
@@ -74,9 +74,9 @@ function ageStyle(iso: string) {
   return hours > FRESH_HOURS ? { opacity: 0.5, stale: true } : { opacity: 0.95, stale: false };
 }
 
-function formatWhen(iso: string) {
+function formatWhen(iso: string, lang: Lang) {
   const olderThanADay = Date.now() - Date.parse(iso) > 86_400_000;
-  return new Date(iso).toLocaleString([], olderThanADay
+  return new Date(iso).toLocaleString(lang, olderThanADay
     ? { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" }
     : { hour: "numeric", minute: "2-digit" });
 }
@@ -118,17 +118,19 @@ function pinStyle(kind: "confirmed" | "reported" | "unconfirmed", color: string,
   };
 }
 
-function badgeText(r: PublicReport) {
-  if (r.source === "moderator") return "Verified by moderator";
+function badgeText(r: PublicReport, t: Dict) {
+  if (r.source === "moderator") return t.verifiedByModerator;
   if (r.source === "imported") {
-    const rating = r.verification ? ` · ${VERIFICATION_LABELS[r.verification]}` : "";
-    return `Via ${r.source_name ?? "another tracker"}${rating}`;
+    const rating = r.verification ? ` · ${t.verification[r.verification]}` : "";
+    const name = (r.source_name ?? t.anotherTracker).replace(/^News: /, t.sourceGroup("News") + ": ");
+    return `${t.via(name)}${rating}`;
   }
-  return "Community report (reviewed)";
+  return t.communityReport;
 }
 
 export default function MapView({ reports, center, zoom, basemap }: Props) {
   const groups = useMemo(() => relatedGroups(reports), [reports]);
+  const { lang, t } = useT();
   return (
     <MapContainer
       center={center}
@@ -157,7 +159,7 @@ export default function MapView({ reports, center, zoom, basemap }: Props) {
       ))}
 
       {reports.map((r) => {
-        const cat = { ...CATEGORIES[r.category], color: categoryColor(basemap, r.category) };
+        const cat = { ...CATEGORIES[r.category], label: t.categories[r.category], color: categoryColor(basemap, r.category) };
         const pane = pinPane(r);
         const { opacity, stale } = ageStyle(r.observed_at);
         const sourceUrl = r.source_url && /^https?:\/\//i.test(r.source_url) ? r.source_url : null;
@@ -190,25 +192,25 @@ export default function MapView({ reports, center, zoom, basemap }: Props) {
               <div className="popup">
                 <strong style={{ color: cat.color }}>{cat.label}</strong>
                 <div className="popup-meta">
-                  {timeAgo(r.observed_at)} · {formatWhen(r.observed_at)}
+                  {agoText(t, r.observed_at)} · {formatWhen(r.observed_at, lang)}
                 </div>
                 {r.location_approximate && (
-                  <div className="popup-approx">Location may not be accurate. Check the source for the reported location.</div>
+                  <div className="popup-approx">{t.approx}</div>
                 )}
                 {r.description && <p>{r.description}</p>}
-                <span className={`badge ${r.source} ${r.verification ?? ""}`}>{badgeText(r)}</span>
+                <span className={`badge ${r.source} ${r.verification ?? ""}`}>{badgeText(r, t)}</span>
                 {sourceUrl && (
                   <a className="popup-source" href={sourceUrl} target="_blank" rel="noopener noreferrer">
-                    Source
+                    {t.source}
                   </a>
                 )}
                 {related.length > 0 && (
                   <div className="popup-related">
-                    <strong>Related</strong>
+                    <strong>{t.relatedHeading}</strong>
                     <ul>
                       {related.map((o) => (
                         <li key={o.id}>
-                          {formatWhen(o.observed_at)}: {o.description.slice(0, 90)}
+                          {formatWhen(o.observed_at, lang)}: {o.description.slice(0, 90)}
                           {o.description.length > 90 ? "…" : ""}
                         </li>
                       ))}

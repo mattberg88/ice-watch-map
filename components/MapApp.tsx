@@ -3,15 +3,16 @@
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useState } from "react";
 import ReportHelp from "./ReportHelp";
-import { CATEGORIES, CATEGORY_KEYS, type PublicReport } from "@/lib/types";
-import { timeAgo } from "@/lib/format";
+import KnowYourRights from "./KnowYourRights";
+import { CATEGORY_KEYS, type PublicReport } from "@/lib/types";
+import { DICTS, LANGS, LangContext, agoText, type Dict, type Lang } from "@/lib/i18n";
 import { DEFAULT_THEME, THEMES, categoryColor, type ThemeId } from "@/lib/themes";
 import { SOURCE_ORDER, sourceGroups } from "@/lib/sources";
 
 // Leaflet touches `window`, so the map only renders in the browser.
 const MapView = dynamic(() => import("./MapView"), {
   ssr: false,
-  loading: () => <div className="map map-loading">Loading map…</div>,
+  loading: () => <div className="map map-loading">…</div>,
 });
 
 // Stops for the time-range slider, short ranges first.
@@ -53,18 +54,15 @@ function nearestStop(hours: number) {
   return best;
 }
 
-/** "in the last 30 days" / "since May 2025", for the count under the slider. */
-function rangePhrase(hours: number) {
-  if (hours >= MAX_HOURS) return "since May 2025";
-  const label = WINDOWS.find((w) => w.hours === hours)?.label ?? formatRange(hours);
-  return `in the last ${label}`;
+/** Label for a time window in the current language: a slider stop's name, or e.g. "45 days". */
+function windowText(t: Dict, hours: number) {
+  const i = WINDOWS.findIndex((w) => w.hours === hours);
+  return t.windowLabel(hours, i >= 0 ? t.windowStops[i] : null);
 }
 
-function formatRange(hours: number) {
-  const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
-  if (hours < 24) return plural(hours, "hour");
-  if (hours % UNITS.months === 0) return plural(hours / UNITS.months, "month");
-  return plural(Math.round((hours / 24) * 10) / 10, "day");
+/** "in the last 30 days" / "since May 2025", for the count under the slider. */
+function rangePhrase(t: Dict, hours: number) {
+  return hours >= MAX_HOURS ? t.rangeSince : t.rangeLast(windowText(t, hours));
 }
 const REFRESH_MS = 60_000;
 
@@ -91,6 +89,30 @@ export default function MapApp({ appName, center, zoom, hotlineLabel, hotlineNum
   // Reports are made to county hotlines, not on this site.
   const [helpOpen, setHelpOpen] = useState(false);
   const [hiddenSources, setHiddenSources] = useState<Set<string>>(new Set());
+  const [rightsOpen, setRightsOpen] = useState(false);
+  // English by default; Spanish when the browser prefers it or the visitor chose it before.
+  const [lang, setLang] = useState<Lang>("en");
+  const t = DICTS[lang];
+
+  useEffect(() => {
+    let saved: string | null = null;
+    try {
+      saved = localStorage.getItem("lang");
+    } catch {}
+    const preferred = saved === "en" || saved === "es" ? saved : navigator.language?.toLowerCase().startsWith("es") ? "es" : "en";
+    setLang(preferred);
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.lang = lang;
+  }, [lang]);
+
+  function chooseLang(next: Lang) {
+    setLang(next);
+    try {
+      localStorage.setItem("lang", next);
+    } catch {}
+  }
 
   const load = useCallback(async () => {
     try {
@@ -117,7 +139,7 @@ export default function MapApp({ appName, center, zoom, hotlineLabel, hotlineNum
   }, [pendingHours]);
 
   const stop = nearestStop(pendingHours);
-  const windowLabel = WINDOWS.find((w) => w.hours === pendingHours)?.label ?? formatRange(pendingHours);
+  const windowLabel = windowText(t, pendingHours);
 
   function onSlide(index: number) {
     const h = WINDOWS[index].hours;
@@ -160,11 +182,19 @@ export default function MapApp({ appName, center, zoom, hotlineLabel, hotlineNum
   const counts = CATEGORY_KEYS.map((key) => ({ key, n: visible.filter((r) => r.category === key).length }));
 
   return (
+    <LangContext.Provider value={{ lang, t }}>
     <div className="app" data-theme={theme}>
       <header className="topbar">
         <div className="brand">
           <h1>{appName}</h1>
-          <span className="sub">Community reports and other trackers</span>
+          <span className="sub">{t.subtitle}</span>
+        </div>
+        <div className="lang-switch" role="group" aria-label={t.language}>
+          {LANGS.map((l) => (
+            <button key={l.id} className={l.id === lang ? "active" : ""} aria-pressed={l.id === lang} onClick={() => chooseLang(l.id)} lang={l.id}>
+              {l.label}
+            </button>
+          ))}
         </div>
         {hotlineNumber && (
           <a className="hotline" href={`tel:${hotlineNumber.replace(/[^\d+]/g, "")}`}>
@@ -185,12 +215,14 @@ export default function MapApp({ appName, center, zoom, hotlineLabel, hotlineNum
         <aside className="panel">
           {helpOpen ? (
             <ReportHelp onClose={() => setHelpOpen(false)} />
+          ) : rightsOpen ? (
+            <KnowYourRights onClose={() => setRightsOpen(false)} />
           ) : (
             <>
               <div className="panel-row">
                 <label className="window">
                   <span className="window-head">
-                    Show last <strong>{windowLabel}</strong>
+                    {t.showLast} <strong>{windowLabel}</strong>
                   </span>
                   <input
                     type="range"
@@ -204,12 +236,12 @@ export default function MapApp({ appName, center, zoom, hotlineLabel, hotlineNum
                   />
                   <datalist id="window-stops">
                     {WINDOWS.map((w, i) => (
-                      <option key={w.hours} value={i} label={w.label} />
+                      <option key={w.hours} value={i} label={t.windowStops[i]} />
                     ))}
                   </datalist>
                   <span className="window-ends">
-                    <span>2 hours</span>
-                    <span>All</span>
+                    <span>{t.ends[0]}</span>
+                    <span>{t.ends[1]}</span>
                   </span>
                 </label>
                 <div className="days-input">
@@ -217,30 +249,33 @@ export default function MapApp({ appName, center, zoom, hotlineLabel, hotlineNum
                     type="text"
                     inputMode="decimal"
                     value={amountText}
-                    placeholder="All"
+                    placeholder={t.all}
                     onChange={(e) => applyAmount(e.target.value.replace(/[^\d.]/g, ""), unit)}
-                    aria-label="How far back"
+                    aria-label={t.howFarBack}
                   />
-                  <select value={unit} onChange={(e) => applyAmount(amountText, e.target.value as Unit)} aria-label="Unit">
-                    <option value="hours">hours back</option>
-                    <option value="days">days back</option>
-                    <option value="months">months back</option>
+                  <select value={unit} onChange={(e) => applyAmount(amountText, e.target.value as Unit)} aria-label={t.unit}>
+                    <option value="hours">{t.units.hours}</option>
+                    <option value="days">{t.units.days}</option>
+                    <option value="months">{t.units.months}</option>
                   </select>
                 </div>
-                <button className="btn primary" onClick={() => setHelpOpen(true)}>
-                  How to report
+                <button className="btn primary" onClick={() => { setRightsOpen(false); setHelpOpen(true); }}>
+                  {t.howToReport}
+                </button>
+                <button className="btn rights-btn" onClick={() => { setHelpOpen(false); setRightsOpen(true); }}>
+                  {t.knowYourRights}
                 </button>
               </div>
 
-              <p className="status" title={lastUpdated ? `Data last updated ${new Date(lastUpdated).toLocaleString()}` : undefined}>
+              <p className="status" title={lastUpdated ? t.dataUpdatedTitle(new Date(lastUpdated).toLocaleString(lang)) : undefined}>
                 {loadError
-                  ? "Couldn't load reports. Retrying…"
-                  : `${visible.length} incident${visible.length === 1 ? "" : "s"} ${rangePhrase(hours)}${lastUpdated ? ` · data updated ${timeAgo(lastUpdated)}` : ""}`}
+                  ? t.loadError
+                  : `${t.count(visible.length, rangePhrase(t, hours))}${lastUpdated ? ` · ${t.dataUpdated(agoText(t, lastUpdated))}` : ""}`}
               </p>
 
               {sourceCounts.size > 0 && (
-                <div className="sources" role="group" aria-label="Filter by source">
-                  <span className="sources-label">Sources</span>
+                <div className="sources" role="group" aria-label={t.filterBySource}>
+                  <span className="sources-label">{t.sources}</span>
                   <div className="chips">
                     {SOURCE_ORDER.filter((g) => sourceCounts.has(g))
                       .concat([...sourceCounts.keys()].filter((g) => !SOURCE_ORDER.includes(g)))
@@ -251,7 +286,7 @@ export default function MapApp({ appName, center, zoom, hotlineLabel, hotlineNum
                           aria-pressed={!hiddenSources.has(g)}
                           onClick={() => toggleSource(g)}
                         >
-                          {g} <span className="chip-count">{sourceCounts.get(g)}</span>
+                          {t.sourceGroup(g)} <span className="chip-count">{sourceCounts.get(g)}</span>
                         </button>
                       ))}
                   </div>
@@ -262,32 +297,32 @@ export default function MapApp({ appName, center, zoom, hotlineLabel, hotlineNum
                 {counts.map(({ key, n }) => (
                   <li key={key}>
                     <span className="dot" style={{ background: categoryColor(theme, key) }} />
-                    {CATEGORIES[key].label}
+                    {t.categories[key]}
                     <span className="count">{n}</span>
                   </li>
                 ))}
                 <li className="legend-key">
                   <span className="dot ring" />
-                  Confirmed
+                  {t.confirmed}
                   <span className="count">{reports.filter((r) => r.source === "moderator" || r.verification === "confirmed").length}</span>
                 </li>
                 <li className="legend-key">
                   <span className="dot solid" />
-                  Sighting
+                  {t.sighting}
                   <span className="count">{visible.filter((r) => r.verification === "sighting" || r.verification === "prior").length}</span>
                 </li>
                 <li className="legend-key">
                   <span className="dot hollow" />
-                  Unconfirmed
+                  {t.unconfirmedLabel}
                   <span className="count">{visible.filter((r) => r.verification === "unconfirmed").length}</span>
                 </li>
                 <li className="legend-key">
                   <span className="dot faint" />
-                  Older than 7 days
+                  {t.older}
                 </li>
                 <li className="legend-key">
                   <span className="line" />
-                  Related incidents
+                  {t.related}
                 </li>
               </ul>
             </>
@@ -306,5 +341,6 @@ export default function MapApp({ appName, center, zoom, hotlineLabel, hotlineNum
       )}
 
     </div>
+    </LangContext.Provider>
   );
 }

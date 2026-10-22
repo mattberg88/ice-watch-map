@@ -286,3 +286,34 @@ textarea { resize: vertical; }
 .dot.hollow { background: rgba(148, 163, 184, 0.2); border: 2px dashed #94a3b8; box-shadow: none; }
 .app[data-theme="night"] .dot.solid { background: #c3ccd6; }
 .app[data-theme="night"] .dot.hollow { background: rgba(195, 204, 214, 0.15); border-color: #c3ccd6; }
+
+/* Language switch */
+.lang-switch { display: flex; gap: 2px; padding: 2px; border: 1px solid var(--border); border-radius: 999px; margin-left: auto; }
+.lang-switch button { border: none; background: transparent; color: var(--muted); font: 600 12px/1 inherit; padding: 6px 10px; border-radius: 999px; cursor: pointer; }
+.lang-switch button.active { background: var(--primary); color: var(--primary-text); }
+.topbar .hotline { margin-left: 12px; }
+
+/* Know your rights */
+.panel-row > .btn.rights-btn { flex-basis: 100%; }
+.rights { display: flex; flex-direction: column; gap: 12px; }
+.rights h2 { font-size: 17px; }
+.rights h3 { font-size: 14px; margin: 6px 0 0; }
+.rights-intro { margin: 0; font-size: 14px; color: var(--muted); }
+.rights-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.rights-list li { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); font-size: 13px; }
+.rights-list strong { font-size: 14px; }
+.rights-say { font-weight: 700; color: var(--text); quotes: "“" "”"; }
+.rights-disclaimer { margin: 0; font-size: 12px; color: var(--muted); font-style: italic; }
+.rights-card { border-radius: 14px; overflow: hidden; background: #fff; color: #111827; border: 1px solid var(--border); font-size: 13px; }
+.rights-card-head { background: #b42318; color: #fff; font-weight: 800; letter-spacing: 0.03em; padding: 12px 14px; font-size: 16px; }
+.rights-card-section { padding: 10px 14px 4px; }
+.rights-card-section + .rights-card-section { border-top: 1px solid #e5e7eb; }
+.rights-card-lang { font-size: 11px; font-weight: 800; color: #b42318; letter-spacing: 0.05em; text-transform: uppercase; }
+.rights-card ul { margin: 6px 0 8px; padding-left: 18px; display: grid; gap: 4px; }
+.rights-card-foot { background: #f3f4f6; padding: 8px 14px; font-weight: 700; font-size: 12px; }
+@media (max-width: 760px) {
+  .topbar { padding: 8px 12px; }
+  .brand h1 { font-size: 16px; }
+  .brand .sub { display: none; }
+  .lang-switch button { padding: 5px 8px; }
+}

@@ -13,12 +13,6 @@ export type ReportStatus = "pending" | "approved" | "rejected";
 export type ReportSource = "community" | "moderator" | "imported";
 export type Verification = "confirmed" | "sighting" | "unconfirmed" | "prior";
 
-export const VERIFICATION_LABELS: Record<Verification, string> = {
-  confirmed: "Confirmed",
-  sighting: "Sighting",
-  unconfirmed: "Unconfirmed",
-  prior: "Earlier incident",
-};
 
 export interface Report {
   id: string;

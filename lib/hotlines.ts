@@ -6,13 +6,14 @@ export interface Hotline {
   county: string;
   name: string;
   phone: string;
-  hours?: string;
+  /** Key into the translated hours text in lib/i18n.tsx. */
+  hours?: "daily6to6" | "allDay";
   url?: string;
 }
 
 export const HOTLINES: Hotline[] = [
-  { county: "Alameda", name: "ACILEP", phone: "(510) 241-4011", hours: "Daily, 6 AM–6 PM", url: "https://www.acilep.org/" },
-  { county: "San Francisco", name: "SF Rapid Response Network", phone: "(415) 200-1548", hours: "24 hours", url: "https://sf.gov/get-help-with-immigration-enforcement-issues" },
+  { county: "Alameda", name: "ACILEP", phone: "(510) 241-4011", hours: "daily6to6", url: "https://www.acilep.org/" },
+  { county: "San Francisco", name: "SF Rapid Response Network", phone: "(415) 200-1548", hours: "allDay", url: "https://sf.gov/get-help-with-immigration-enforcement-issues" },
   { county: "Contra Costa", name: "Stand Together Contra Costa", phone: "(925) 900-5151", url: "https://standtogethercontracosta.org/" },
   { county: "Santa Clara", name: "Santa Clara County Rapid Response Network", phone: "(408) 290-1144" },
   { county: "San Mateo", name: "San Mateo County Rapid Response Network", phone: "(203) 666-4472" },
