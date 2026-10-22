@@ -7,6 +7,7 @@ import "@maplibre/maplibre-gl-leaflet";
 import { CircleMarker, MapContainer, Polyline, Popup, useMap, useMapEvents } from "react-leaflet";
 import { CATEGORIES, VERIFICATION_LABELS, type PublicReport } from "@/lib/types";
 import { timeAgo } from "@/lib/format";
+import { basemapUrl, loadBasemapStyle, type ThemeId } from "@/lib/themes";
 
 interface Props {
   reports: PublicReport[];
@@ -16,8 +17,8 @@ interface Props {
   picking: boolean;
   flyTo: { lat: number; lng: number; key: number } | null;
   onPick: (lat: number, lng: number) => void;
-  /** OpenFreeMap style URL; changes with the selected theme. */
-  basemap: string;
+  /** Selected theme; picks and recolors the OpenFreeMap basemap. */
+  basemap: ThemeId;
 }
 
 function ClickToPick({ enabled, onPick }: { enabled: boolean; onPick: Props["onPick"] }) {
@@ -33,14 +34,14 @@ function ClickToPick({ enabled, onPick }: { enabled: boolean; onPick: Props["onP
 setWorkerUrl("/maplibre/maplibre-gl-worker.mjs");
 
 /** OpenFreeMap vector basemap: free, no API key. The style swaps in place when the theme changes. */
-function Basemap({ style }: { style: string }) {
+function Basemap({ style }: { style: ThemeId }) {
   const map = useMap();
   const layerRef = useRef<L.MaplibreGL | null>(null);
   const styleRef = useRef(style);
   styleRef.current = style;
 
   useEffect(() => {
-    const layer = L.maplibreGL({ style: styleRef.current });
+    const layer = L.maplibreGL({ style: basemapUrl(styleRef.current) });
     layer.options.attribution =
       '<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> &copy; <a href="https://www.openmaptiles.org/" target="_blank" rel="noopener">OpenMapTiles</a> Data from <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>';
     layer.addTo(map);
@@ -57,7 +58,13 @@ function Basemap({ style }: { style: string }) {
 
   useEffect(() => {
     // Swapping the style is cheaper and safer than removing and re-adding the GL layer.
-    layerRef.current?.getMaplibreMap()?.setStyle(style);
+    let cancelled = false;
+    loadBasemapStyle(style).then((resolved) => {
+      if (!cancelled) layerRef.current?.getMaplibreMap()?.setStyle(resolved as never);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [style]);
 
   return null;

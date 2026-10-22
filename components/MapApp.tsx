@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import ReportForm from "./ReportForm";
 import { CATEGORIES, CATEGORY_KEYS, type PublicReport } from "@/lib/types";
 import { timeAgo } from "@/lib/format";
-import { DEFAULT_THEME, THEMES, basemapUrl, type ThemeId } from "@/lib/themes";
+import { DEFAULT_THEME, THEMES, type ThemeId } from "@/lib/themes";
 
 // Leaflet touches `window`, so the map only renders in the browser.
 const MapView = dynamic(() => import("./MapView"), {
@@ -29,6 +29,21 @@ const WINDOWS = [
   { hours: 3 * 8760, label: "All (since May 2025)" },
 ];
 const DEFAULT_STOP = WINDOWS.findIndex((w) => w.hours === 720);
+const MAX_DAYS = WINDOWS[WINDOWS.length - 1].hours / 24;
+
+/** Slider position closest to an arbitrary number of hours (for values typed into the days box). */
+function nearestStop(hours: number) {
+  let best = 0;
+  for (let i = 1; i < WINDOWS.length; i++) {
+    if (Math.abs(Math.log(WINDOWS[i].hours / hours)) < Math.abs(Math.log(WINDOWS[best].hours / hours))) best = i;
+  }
+  return best;
+}
+
+function formatDays(days: number) {
+  const d = Math.round(days * 10) / 10;
+  return `${d} day${d === 1 ? "" : "s"}`;
+}
 const REFRESH_MS = 60_000;
 
 interface Props {
@@ -41,9 +56,11 @@ interface Props {
 
 export default function MapApp({ appName, center, zoom, hotlineLabel, hotlineNumber }: Props) {
   const [reports, setReports] = useState<PublicReport[]>([]);
-  // The slider moves `stop` immediately; `hours` (which triggers a fetch) follows once it settles.
-  const [stop, setStop] = useState(DEFAULT_STOP);
+  // The slider and the days box both set `pendingHours` immediately; `hours` (which triggers a fetch)
+  // follows once input settles.
+  const [pendingHours, setPendingHours] = useState(WINDOWS[DEFAULT_STOP].hours);
   const [hours, setHours] = useState(WINDOWS[DEFAULT_STOP].hours);
+  const [daysText, setDaysText] = useState(String(WINDOWS[DEFAULT_STOP].hours / 24));
   const [theme, setTheme] = useState<ThemeId>(DEFAULT_THEME);
   const [showStylePicker, setShowStylePicker] = useState(false);
   const [loadError, setLoadError] = useState(false);
@@ -75,9 +92,26 @@ export default function MapApp({ appName, center, zoom, hotlineLabel, hotlineNum
   }, [load]);
 
   useEffect(() => {
-    const id = setTimeout(() => setHours(WINDOWS[stop].hours), 250);
+    const id = setTimeout(() => setHours(pendingHours), 300);
     return () => clearTimeout(id);
-  }, [stop]);
+  }, [pendingHours]);
+
+  const stop = nearestStop(pendingHours);
+  const windowLabel = WINDOWS.find((w) => w.hours === pendingHours)?.label ?? formatDays(pendingHours / 24);
+
+  function onSlide(index: number) {
+    const h = WINDOWS[index].hours;
+    setPendingHours(h);
+    setDaysText(h >= 24 && h < WINDOWS[WINDOWS.length - 1].hours ? String(Math.round(h / 24)) : "");
+  }
+
+  function onDaysInput(text: string) {
+    setDaysText(text);
+    const days = Number(text);
+    if (text.trim() !== "" && Number.isFinite(days) && days > 0) {
+      setPendingHours(Math.min(Math.round(days * 24), WINDOWS[WINDOWS.length - 1].hours));
+    }
+  }
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -157,7 +191,7 @@ export default function MapApp({ appName, center, zoom, hotlineLabel, hotlineNum
           picking={formOpen}
           flyTo={flyTo}
           onPick={(lat, lng) => setDraft({ lat, lng })}
-          basemap={basemapUrl(theme)}
+          basemap={theme}
         />
 
         <aside className="panel">
@@ -175,7 +209,7 @@ export default function MapApp({ appName, center, zoom, hotlineLabel, hotlineNum
               <div className="panel-row">
                 <label className="window">
                   <span className="window-head">
-                    Show last <strong>{WINDOWS[stop].label}</strong>
+                    Show last <strong>{windowLabel}</strong>
                   </span>
                   <input
                     type="range"
@@ -183,8 +217,8 @@ export default function MapApp({ appName, center, zoom, hotlineLabel, hotlineNum
                     max={WINDOWS.length - 1}
                     step={1}
                     value={stop}
-                    onChange={(e) => setStop(Number(e.target.value))}
-                    aria-valuetext={WINDOWS[stop].label}
+                    onChange={(e) => onSlide(Number(e.target.value))}
+                    aria-valuetext={windowLabel}
                     list="window-stops"
                   />
                   <datalist id="window-stops">
@@ -196,6 +230,20 @@ export default function MapApp({ appName, center, zoom, hotlineLabel, hotlineNum
                     <span>2 hours</span>
                     <span>All</span>
                   </span>
+                </label>
+                <label className="days-input">
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min={1}
+                    max={MAX_DAYS}
+                    step={1}
+                    value={daysText}
+                    placeholder="days"
+                    onChange={(e) => onDaysInput(e.target.value)}
+                    aria-label="Days back"
+                  />
+                  <span>days back</span>
                 </label>
                 <button className="btn primary" onClick={() => setFormOpen(true)}>
                   + Report
