@@ -102,8 +102,10 @@ function pinStyle(kind: "confirmed" | "reported" | "unconfirmed", color: string,
   if (kind === "confirmed") {
     return {
       radius: 12 - shrink,
+      // Passed as its own prop: Leaflet reads className only when it creates the shape, not from pathOptions updates.
+      className: "pin-confirmed",
       // Themes can recolor the confirmed ring via CSS (dark maps need a light ring).
-      path: { color: "#111827", className: "pin-confirmed", weight: 3, fillColor: color, fillOpacity: opacity, opacity: Math.max(opacity, 0.8) },
+      path: { color: "#111827", weight: 3, fillColor: color, fillOpacity: opacity, opacity: Math.max(opacity, 0.8) },
     };
   }
   if (kind === "unconfirmed") {
@@ -160,7 +162,8 @@ export default function MapView({ reports, center, zoom, basemap }: Props) {
           <Polyline
             key={key}
             positions={list.map((r) => [r.lat, r.lng] as [number, number])}
-            pathOptions={{ color: "#334155", weight: 2, opacity: 0.7, dashArray: "6 6", className: "related-line" }}
+            className="related-line"
+            pathOptions={{ color: "#334155", weight: 2, opacity: 0.7, dashArray: "6 6" }}
           />
         ) : null,
       )}
@@ -190,13 +193,14 @@ export default function MapView({ reports, center, zoom, basemap }: Props) {
                 radius={g.radius}
                 pane={pane}
                 interactive={false}
-                pathOptions={{ stroke: false, fillColor: cat.color, fillOpacity: g.opacity, className: "pin-glow" }}
+                pathOptions={{ stroke: false, fillColor: cat.color, fillOpacity: g.opacity }}
               />
             ))}
           <CircleMarker
             center={[r.lat, r.lng]}
             radius={style.radius}
             pane={pane}
+            className={style.className}
             pathOptions={{
               ...style.path,
             }}

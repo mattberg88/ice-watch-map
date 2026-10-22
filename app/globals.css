@@ -285,8 +285,6 @@ textarea { resize: vertical; }
 .dot.solid { background: #94a3b8; border: 1.5px solid #0b0f14; box-shadow: none; }
 .dot.glow { background: #94a3b8; box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.45), 0 0 0 6px rgba(148, 163, 184, 0.25), 0 0 0 9px rgba(148, 163, 184, 0.12); margin: 0 4px; }
 .app[data-theme="night"] .dot.glow { background: #c3ccd6; box-shadow: 0 0 0 3px rgba(195, 204, 214, 0.4), 0 0 0 6px rgba(195, 204, 214, 0.22), 0 0 0 9px rgba(195, 204, 214, 0.1); }
-/* Softens the stacked glow rings where the browser supports filters on SVG shapes. */
-.pin-glow { filter: blur(2px); }
 .popup-count { font-size: 12px; font-weight: 600; margin: 4px 0 6px; }
 .dot.hollow { background: rgba(148, 163, 184, 0.2); border: 2px dashed #94a3b8; box-shadow: none; }
 .app[data-theme="night"] .dot.solid { background: #c3ccd6; }
