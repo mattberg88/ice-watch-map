@@ -203,6 +203,9 @@ export default function MapApp({ appName, center, zoom, hotlineLabel, hotlineNum
           </a>
         )}
       </header>
+      <p className="disclaimer" role="note">
+        {t.disclaimer}
+      </p>
 
       <main className="main">
         <MapView
@@ -272,7 +275,6 @@ export default function MapApp({ appName, center, zoom, hotlineLabel, hotlineNum
                   ? t.loadError
                   : `${t.count(visible.length, rangePhrase(t, hours))}${lastUpdated ? ` · ${t.dataUpdated(agoText(t, lastUpdated))}` : ""}`}
               </p>
-              <p className="disclaimer">{t.disclaimer}</p>
 
               {sourceCounts.size > 0 && (
                 <div className="sources" role="group" aria-label={t.filterBySource}>
