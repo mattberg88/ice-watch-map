@@ -44,6 +44,12 @@ npm run dev
 
 `npm run db:import -- <file.json>` publishes reports gathered elsewhere (StopICE, iceout.org, news). Each row needs `external_id`, `category`, `description`, `lat`, `lng`, `observed_at`, `verification` (`confirmed`, `sighting`, `unconfirmed` or `prior`), `source_name` and `source_url`. Rows are keyed on `external_id`, so re-running an import never creates duplicates. Run `npm run db:migrate` first to add the columns.
 
+## Sources
+
+- **StopICE**: public data, synced hourly (see below).
+- **People Over Papers (iceout.org)**: used with their permission (Instagram message, Oct 2026). Their site doesn't allow automated access, so their reports are imported by hand; ask them for a feed or API key to automate it. Their "Other" category (agencies without immigration authority) is left off the map.
+- **News and Mission Local**: added by hand with links to the articles.
+
 ## Automatic updates
 
 `.github/workflows/sync-reports.yml` runs `scripts/sync-stopice.mjs` every hour. It pulls recent Bay Area StopICE alerts, uses each alert page's original text (the export strips punctuation), removes plates, VINs, phone numbers and emails, checks the written location against OpenStreetMap, skips anything already on the map, and publishes the rest with their source link. Add these repository secrets under **Settings → Secrets and variables → Actions**:

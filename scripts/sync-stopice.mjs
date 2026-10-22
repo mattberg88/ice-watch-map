@@ -50,7 +50,8 @@ const ARREST_EVENT = new RegExp(
     String.raw`|took (a|an|someone|him|her|them|\d+|two|three|four|five)\b|taken into custody|in (ice )?custody|picked up` +
     String.raw`|arrests? (happening|in progress|made|being made)|arresting|detention of|is being detained|were detained` +
     String.raw`|holding a patient|guarding a patient|hostage` +
-    String.raw`|(an|one|two|three|confirmed|reported|another|the|workplace) arrests?|arrests? (at|outside|in|of|near))\b`,
+    String.raw`|(an|one|two|three|confirmed|reported|another|the|workplace) arrests?|arrests? (at|outside|in|of|near)` +
+    String.raw`|se llevaron|se lo llevaron|se la llevaron|agarraron|detenid[oa]s?|deteniendo|arrest(o|ando|aron)|levantaron a)\b`,
 );
 
 function categoryFor(text) {
@@ -65,8 +66,8 @@ function categoryFor(text) {
   );
   if (ARREST_EVENT.test(t)) return "detention";
   if (t.includes("checkpoint")) return "checkpoint";
-  if (/\b(suv|suvs|van|vans|truck|trucks|vehicle|vehicles|car|cars|jeep|tahoe|sedan|durango|explorer)\b/.test(t)) return "vehicle";
-  if (/\b(agent|agents|officer|officers|ice|ero|hsi|cbp|dhs|border patrol)\b/.test(t)) return "agents";
+  if (/\b(suv|suvs|van|vans|truck|trucks|vehicle|vehicles|car|cars|jeep|tahoe|sedan|durango|explorer|camionetas?|carros?|veh[ií]culos?|trocas?|autos?)\b/.test(t)) return "vehicle";
+  if (/\b(agent|agents|officer|officers|ice|ero|hsi|cbp|dhs|border patrol|agentes?|oficiales|migraci[oó]n)\b/.test(t)) return "agents";
   return "other";
 }
 
