@@ -17,10 +17,11 @@ interface Props {
   basemap: ThemeId;
 }
 
-// Keep the map on the Bay Area: no zooming out past the region or panning away from it.
+// Keep the map on the Bay Area: no zooming out past the region or panning away from it. The bounds reach
+// past the outermost reports so popups near the edges can still pan fully into view.
 const BAY_AREA_BOUNDS: [[number, number], [number, number]] = [
-  [36.85, -123.25],
-  [38.6, -121.4],
+  [36.55, -123.6],
+  [39.0, -121.05],
 ];
 const MIN_ZOOM = 9;
 
