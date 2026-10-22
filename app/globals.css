@@ -99,19 +99,6 @@ textarea { resize: vertical; }
   font-size: 13px; padding: 10px 12px; border-radius: 8px;
   background: var(--notice-bg); border: 1px solid var(--notice-border);
 }
-.foot { margin-top: auto; font-size: 12px; }
-
-/* Form */
-.report-form { display: flex; flex-direction: column; gap: 14px; }
-.report-form h2 { font-size: 17px; }
-.field { display: flex; flex-direction: column; gap: 6px; }
-.label { font-weight: 600; font-size: 13px; }
-.field small { color: var(--muted); font-size: 12px; }
-.location-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.loc-set { font-variant-numeric: tabular-nums; }
-.loc-unset { color: var(--muted); font-style: italic; font-size: 13px; }
-.actions { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
-.error { color: var(--danger); margin: 0; font-size: 13px; }
 
 /* Popups and badges */
 .popup { min-width: 180px; }
@@ -123,27 +110,6 @@ textarea { resize: vertical; }
 .badge.imported.confirmed { background: #fee2e2; color: #991b1b; }
 .popup-source { display: inline-block; margin-left: 8px; font-size: 12px; }
 
-.toast {
-  position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 1000;
-  background: var(--text); color: var(--bg); padding: 10px 16px; border-radius: 8px;
-  max-width: calc(100vw - 32px); box-shadow: 0 4px 16px rgb(0 0 0 / 0.2);
-}
-
-/* Admin */
-.admin { max-width: 760px; margin: 0 auto; padding: 24px 16px; }
-.login { display: flex; flex-direction: column; gap: 12px; max-width: 320px; margin: 10vh auto; }
-.admin-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
-.admin-links { display: flex; align-items: center; gap: 12px; }
-.checklist { margin: 16px 0; font-size: 13px; padding: 10px 12px; border-radius: 8px; background: var(--surface); border: 1px solid var(--border); }
-.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
-.tab { background: none; border: none; padding: 8px 14px; font: inherit; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; }
-.tab.active { color: var(--text); border-bottom-color: var(--primary); font-weight: 600; }
-.queue { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
-.card { border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; background: var(--surface); }
-.card-head { display: flex; justify-content: space-between; align-items: center; }
-.card-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
-.card p { margin: 8px 0; }
-.muted, .empty { color: var(--muted); }
 .popup-related { margin-top: 8px; padding-top: 6px; border-top: 1px solid #e2e8f0; font-size: 12px; }
 .popup-related ul { margin: 4px 0 0; padding-left: 16px; }
 .legend-key { color: var(--muted, #64748b); font-size: 13px; }

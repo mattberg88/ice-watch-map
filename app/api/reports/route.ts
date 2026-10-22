@@ -1,7 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { db } from "@/lib/db";
-import { isAdmin } from "@/lib/auth";
-import { newReportSchema, personalDetailIssue, roundCoord } from "@/lib/validation";
 import type { PublicReport } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -32,47 +30,4 @@ export async function GET(req: NextRequest) {
     { reports: rows, syncedAt },
     { headers: { "Cache-Control": "public, s-maxage=30, stale-while-revalidate=30" } },
   );
-}
-
-// POST /api/reports — moderators only; their reports are published immediately. The public is pointed to
-// county rapid response hotlines instead (see lib/hotlines.ts).
-export async function POST(req: NextRequest) {
-  if (!(await isAdmin())) {
-    return NextResponse.json(
-      { error: "Please report ICE activity to your county's rapid response hotline." },
-      { status: 403 },
-    );
-  }
-
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-  }
-
-  const parsed = newReportSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid report" }, { status: 400 });
-  }
-  const report = parsed.data;
-
-  const issue = personalDetailIssue(report.description);
-  if (issue) {
-    return NextResponse.json(
-      { error: `Please remove ${issue} from the description. Don't post identifying details about anyone.` },
-      { status: 400 },
-    );
-  }
-
-  const [row] = (await db()`
-    INSERT INTO reports (category, description, lat, lng, observed_at, status, source, reviewed_at)
-    VALUES (
-      ${report.category}, ${report.description}, ${roundCoord(report.lat)}, ${roundCoord(report.lng)},
-      ${report.observedAt}, 'approved', 'moderator', now()
-    )
-    RETURNING id, status
-  `) as { id: string; status: string }[];
-
-  return NextResponse.json(row, { status: 201 });
 }

@@ -237,10 +237,6 @@ export default function MapApp({ appName, center, zoom, hotlineLabel, hotlineNum
                   Related incidents
                 </li>
               </ul>
-
-              <footer className="foot">
-                <a href="/admin">Moderator login</a>
-              </footer>
             </>
           )}
         </aside>
