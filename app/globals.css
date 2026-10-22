@@ -242,3 +242,18 @@ textarea { resize: vertical; }
 @media (max-width: 760px) {
   .style-picker { flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; border-radius: 14px; bottom: 8px; }
 }
+
+/* Night Watch is the default: rings, lines and legend swatches need to read on a dark map. */
+.app[data-theme="night"] .pin-confirmed { stroke: #f8fafc; }
+.app[data-theme="night"] .related-line { stroke: #cbd5e1; }
+.app[data-theme="night"] .dot.ring { box-shadow: 0 0 0 2px #f8fafc, 0 0 0 5px rgba(248, 250, 252, 0.25); }
+.app[data-theme="night"] .legend .line { border-top-color: #cbd5e1; }
+.app[data-theme="night"] .dot { border-color: var(--bg); box-shadow: 0 0 0 1px var(--border); }
+.app[data-theme="night"] .popup-related { border-top-color: #1f2a37; }
+.app[data-theme="night"] .badge { background: #1f2a37; color: #e6edf3; }
+.app[data-theme="night"] .badge.imported { background: #1e2a4a; color: #c7d2fe; }
+.app[data-theme="night"] .badge.imported.confirmed, .app[data-theme="night"] .badge.moderator { background: #4c1d1d; color: #fecaca; }
+.app[data-theme="night"] .leaflet-popup-content-wrapper a { color: #fca5a5; }
+.app[data-theme="night"] .leaflet-bar a { background: #121922; color: #e6edf3; border-color: #1f2a37; }
+.app[data-theme="night"] .leaflet-control-attribution { background: rgb(11 15 20 / 0.75); color: #8b98a5; }
+.app[data-theme="night"] .leaflet-control-attribution a { color: #cbd5e1; }

@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import ReportForm from "./ReportForm";
 import { CATEGORIES, CATEGORY_KEYS, type PublicReport } from "@/lib/types";
 import { timeAgo } from "@/lib/format";
-import { THEMES, basemapUrl, type ThemeId } from "@/lib/themes";
+import { DEFAULT_THEME, THEMES, basemapUrl, type ThemeId } from "@/lib/themes";
 
 // Leaflet touches `window`, so the map only renders in the browser.
 const MapView = dynamic(() => import("./MapView"), {
@@ -44,7 +44,7 @@ export default function MapApp({ appName, center, zoom, hotlineLabel, hotlineNum
   // The slider moves `stop` immediately; `hours` (which triggers a fetch) follows once it settles.
   const [stop, setStop] = useState(DEFAULT_STOP);
   const [hours, setHours] = useState(WINDOWS[DEFAULT_STOP].hours);
-  const [theme, setTheme] = useState<ThemeId>("classic");
+  const [theme, setTheme] = useState<ThemeId>(DEFAULT_THEME);
   const [showStylePicker, setShowStylePicker] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);

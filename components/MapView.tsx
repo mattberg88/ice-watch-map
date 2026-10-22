@@ -119,7 +119,7 @@ export default function MapView({ reports, center, zoom, draft, picking, flyTo, 
           <Polyline
             key={key}
             positions={list.map((r) => [r.lat, r.lng] as [number, number])}
-            pathOptions={{ color: "#334155", weight: 2, opacity: 0.7, dashArray: "6 6" }}
+            pathOptions={{ color: "#334155", weight: 2, opacity: 0.7, dashArray: "6 6", className: "related-line" }}
           />
         ) : null,
       )}
@@ -148,6 +148,8 @@ export default function MapView({ reports, center, zoom, draft, picking, flyTo, 
             radius={radius}
             pathOptions={{
               color: confirmed ? "#111827" : "#ffffff",
+              // Themes can recolor the confirmed ring via CSS (dark maps need a light ring).
+              className: confirmed ? "pin-confirmed" : undefined,
               weight: confirmed ? 3 : stale ? 1 : 2,
               fillColor: cat.color,
               fillOpacity: opacity,
