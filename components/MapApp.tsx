@@ -52,6 +52,13 @@ function nearestStop(hours: number) {
   return best;
 }
 
+/** "in the last 30 days" / "since May 2025", for the count under the slider. */
+function rangePhrase(hours: number) {
+  if (hours >= MAX_HOURS) return "since May 2025";
+  const label = WINDOWS.find((w) => w.hours === hours)?.label ?? formatRange(hours);
+  return `in the last ${label}`;
+}
+
 function formatRange(hours: number) {
   const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
   if (hours < 24) return plural(hours, "hour");
@@ -212,7 +219,7 @@ export default function MapApp({ appName, center, zoom, hotlineLabel, hotlineNum
               <p className="status" title={lastUpdated ? `Data last updated ${new Date(lastUpdated).toLocaleString()}` : undefined}>
                 {loadError
                   ? "Couldn't load reports. Retrying…"
-                  : `${reports.length} report${reports.length === 1 ? "" : "s"}${lastUpdated ? ` · data updated ${timeAgo(lastUpdated)}` : ""}`}
+                  : `${reports.length} incident${reports.length === 1 ? "" : "s"} ${rangePhrase(hours)}${lastUpdated ? ` · data updated ${timeAgo(lastUpdated)}` : ""}`}
               </p>
 
               <ul className="legend">
