@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import ReportForm from "./ReportForm";
 import { CATEGORIES, CATEGORY_KEYS, type PublicReport } from "@/lib/types";
 import { timeAgo } from "@/lib/format";
+import { THEMES, basemapUrl, type ThemeId } from "@/lib/themes";
 
 // Leaflet touches `window`, so the map only renders in the browser.
 const MapView = dynamic(() => import("./MapView"), {
@@ -12,12 +13,14 @@ const MapView = dynamic(() => import("./MapView"), {
   loading: () => <div className="map map-loading">Loading map…</div>,
 });
 
+// Stops for the time-range slider, short ranges first.
 const WINDOWS = [
   { hours: 2, label: "2 hours" },
   { hours: 12, label: "12 hours" },
   { hours: 24, label: "24 hours" },
   { hours: 72, label: "3 days" },
   { hours: 168, label: "7 days" },
+  { hours: 336, label: "14 days" },
   { hours: 720, label: "30 days" },
   { hours: 2160, label: "90 days" },
   { hours: 4380, label: "6 months" },
@@ -25,6 +28,7 @@ const WINDOWS = [
   // The API caps this at its own maximum; imported history starts in May 2025.
   { hours: 3 * 8760, label: "All (since May 2025)" },
 ];
+const DEFAULT_STOP = WINDOWS.findIndex((w) => w.hours === 720);
 const REFRESH_MS = 60_000;
 
 interface Props {
@@ -37,7 +41,11 @@ interface Props {
 
 export default function MapApp({ appName, center, zoom, hotlineLabel, hotlineNumber }: Props) {
   const [reports, setReports] = useState<PublicReport[]>([]);
-  const [hours, setHours] = useState(720);
+  // The slider moves `stop` immediately; `hours` (which triggers a fetch) follows once it settles.
+  const [stop, setStop] = useState(DEFAULT_STOP);
+  const [hours, setHours] = useState(WINDOWS[DEFAULT_STOP].hours);
+  const [theme, setTheme] = useState<ThemeId>("classic");
+  const [showStylePicker, setShowStylePicker] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
@@ -65,6 +73,18 @@ export default function MapApp({ appName, center, zoom, hotlineLabel, hotlineNum
     const id = setInterval(load, REFRESH_MS);
     return () => clearInterval(id);
   }, [load]);
+
+  useEffect(() => {
+    const id = setTimeout(() => setHours(WINDOWS[stop].hours), 250);
+    return () => clearTimeout(id);
+  }, [stop]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const requested = params.get("style");
+    if (requested && THEMES.some((t) => t.id === requested)) setTheme(requested as ThemeId);
+    setShowStylePicker(params.has("styles") || params.has("style"));
+  }, []);
 
   useEffect(() => {
     fetch("/api/admin/session")
@@ -114,7 +134,7 @@ export default function MapApp({ appName, center, zoom, hotlineLabel, hotlineNum
   const counts = CATEGORY_KEYS.map((key) => ({ key, n: reports.filter((r) => r.category === key).length }));
 
   return (
-    <div className="app">
+    <div className="app" data-theme={theme}>
       <header className="topbar">
         <div className="brand">
           <h1>{appName}</h1>
@@ -137,6 +157,7 @@ export default function MapApp({ appName, center, zoom, hotlineLabel, hotlineNum
           picking={formOpen}
           flyTo={flyTo}
           onPick={(lat, lng) => setDraft({ lat, lng })}
+          basemap={basemapUrl(theme)}
         />
 
         <aside className="panel">
@@ -153,14 +174,28 @@ export default function MapApp({ appName, center, zoom, hotlineLabel, hotlineNum
             <>
               <div className="panel-row">
                 <label className="window">
-                  Show last
-                  <select value={hours} onChange={(e) => setHours(Number(e.target.value))}>
-                    {WINDOWS.map((w) => (
-                      <option key={w.hours} value={w.hours}>
-                        {w.label}
-                      </option>
+                  <span className="window-head">
+                    Show last <strong>{WINDOWS[stop].label}</strong>
+                  </span>
+                  <input
+                    type="range"
+                    min={0}
+                    max={WINDOWS.length - 1}
+                    step={1}
+                    value={stop}
+                    onChange={(e) => setStop(Number(e.target.value))}
+                    aria-valuetext={WINDOWS[stop].label}
+                    list="window-stops"
+                  />
+                  <datalist id="window-stops">
+                    {WINDOWS.map((w, i) => (
+                      <option key={w.hours} value={i} label={w.label} />
                     ))}
-                  </select>
+                  </datalist>
+                  <span className="window-ends">
+                    <span>2 hours</span>
+                    <span>All</span>
+                  </span>
                 </label>
                 <button className="btn primary" onClick={() => setFormOpen(true)}>
                   + Report
@@ -203,6 +238,16 @@ export default function MapApp({ appName, center, zoom, hotlineLabel, hotlineNum
           )}
         </aside>
       </main>
+
+      {showStylePicker && (
+        <div className="style-picker" role="group" aria-label="Preview styles">
+          {THEMES.map((t) => (
+            <button key={t.id} className={t.id === theme ? "active" : ""} onClick={() => setTheme(t.id)}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {toast && (
         <div className="toast" role="status">

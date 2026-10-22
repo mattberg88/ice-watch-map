@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useEffect, useMemo } from "react";
+import { Fragment, useEffect, useMemo, useRef } from "react";
 import L from "leaflet";
 import { setWorkerUrl } from "maplibre-gl";
 import "@maplibre/maplibre-gl-leaflet";
@@ -16,6 +16,8 @@ interface Props {
   picking: boolean;
   flyTo: { lat: number; lng: number; key: number } | null;
   onPick: (lat: number, lng: number) => void;
+  /** OpenFreeMap style URL; changes with the selected theme. */
+  basemap: string;
 }
 
 function ClickToPick({ enabled, onPick }: { enabled: boolean; onPick: Props["onPick"] }) {
@@ -30,22 +32,34 @@ function ClickToPick({ enabled, onPick }: { enabled: boolean; onPick: Props["onP
 // Copied into public/ by scripts/copy-maplibre-worker.mjs; the bundler can't serve it.
 setWorkerUrl("/maplibre/maplibre-gl-worker.mjs");
 
-/** OpenFreeMap's muted Positron style: free, no API key, and no terrain or POI symbols. */
-function Basemap() {
+/** OpenFreeMap vector basemap: free, no API key. The style swaps in place when the theme changes. */
+function Basemap({ style }: { style: string }) {
   const map = useMap();
+  const layerRef = useRef<L.MaplibreGL | null>(null);
+  const styleRef = useRef(style);
+  styleRef.current = style;
+
   useEffect(() => {
-    const layer = L.maplibreGL({ style: "https://tiles.openfreemap.org/styles/positron" });
+    const layer = L.maplibreGL({ style: styleRef.current });
     layer.options.attribution =
       '<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> &copy; <a href="https://www.openmaptiles.org/" target="_blank" rel="noopener">OpenMapTiles</a> Data from <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>';
     layer.addTo(map);
+    layerRef.current = layer;
     // Leaflet doesn't notice container resizes (phone rotation, panel changes), which leaves the GL canvas half drawn.
     const resize = new ResizeObserver(() => map.invalidateSize());
     resize.observe(map.getContainer());
     return () => {
       resize.disconnect();
+      layerRef.current = null;
       map.removeLayer(layer);
     };
   }, [map]);
+
+  useEffect(() => {
+    // Swapping the style is cheaper and safer than removing and re-adding the GL layer.
+    layerRef.current?.getMaplibreMap()?.setStyle(style);
+  }, [style]);
+
   return null;
 }
 
@@ -92,11 +106,11 @@ function badgeText(r: PublicReport) {
   return "Community report (reviewed)";
 }
 
-export default function MapView({ reports, center, zoom, draft, picking, flyTo, onPick }: Props) {
+export default function MapView({ reports, center, zoom, draft, picking, flyTo, onPick, basemap }: Props) {
   const groups = useMemo(() => relatedGroups(reports), [reports]);
   return (
     <MapContainer center={center} zoom={zoom} className={`map${picking ? " picking" : ""}`} zoomControl>
-      <Basemap />
+      <Basemap style={basemap} />
       <ClickToPick enabled={picking} onPick={onPick} />
       <FlyTo target={flyTo} />
 

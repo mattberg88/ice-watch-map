@@ -37,7 +37,7 @@ a { color: var(--primary); }
 h1, h2 { margin: 0; }
 
 /* Layout */
-.app { display: flex; flex-direction: column; height: 100dvh; }
+.app { display: flex; flex-direction: column; height: 100dvh; color: var(--text); background: var(--bg); }
 .topbar {
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
   padding: 10px 16px; border-bottom: 1px solid var(--border); background: var(--bg); z-index: 2;
@@ -84,8 +84,10 @@ select, input, textarea {
 textarea { resize: vertical; }
 
 .panel-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
-.window { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); }
-.window select { width: auto; }
+.window { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); flex: 1; min-width: 0; }
+.window-head strong { color: var(--text); font-size: 14px; margin-left: 4px; }
+.window input[type="range"] { padding: 0; border: none; background: none; accent-color: var(--primary); height: 24px; }
+.window-ends { display: flex; justify-content: space-between; font-size: 11px; }
 .status { margin: 0; font-size: 13px; color: var(--muted); }
 
 .legend { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
@@ -150,3 +152,93 @@ textarea { resize: vertical; }
 .dot.faint { background: #dc2626; opacity: 0.5; }
 .legend .line { display: inline-block; width: 14px; border-top: 2px dashed #334155; margin-right: 2px; }
 .popup-approx { margin-top: 4px; font-size: 12px; color: #92400e; background: #fef3c7; border-radius: 4px; padding: 2px 6px; }
+
+/* Style picker (shown with ?styles in the URL) */
+.style-picker {
+  position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 1100;
+  display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; max-width: calc(100vw - 24px);
+  padding: 6px; border-radius: 999px; background: rgb(17 24 39 / 0.88); box-shadow: 0 6px 24px rgb(0 0 0 / 0.25);
+}
+.style-picker button {
+  border: none; background: transparent; color: #e5e7eb; font: 600 12px/1 system-ui, sans-serif;
+  padding: 8px 12px; border-radius: 999px; cursor: pointer; white-space: nowrap;
+}
+.style-picker button.active { background: #fff; color: #111827; }
+
+/* ---------- Theme 1: Night Watch — dark, high-contrast, alert red ---------- */
+.app[data-theme="night"] {
+  --bg: #0b0f14; --surface: #121922; --border: #1f2a37; --text: #e6edf3; --muted: #8b98a5;
+  --primary: #ff4d4f; --primary-text: #fff;
+}
+.app[data-theme="night"] .topbar { background: #0b0f14; border-bottom-color: #1f2a37; }
+.app[data-theme="night"] .brand h1 { letter-spacing: 0.02em; }
+.app[data-theme="night"] .brand h1::before { content: "●"; color: var(--primary); margin-right: 8px; font-size: 12px; vertical-align: middle; }
+.app[data-theme="night"] .leaflet-popup-content-wrapper,
+.app[data-theme="night"] .leaflet-popup-tip { background: #121922; color: #e6edf3; }
+.app[data-theme="night"] .popup-meta { color: #8b98a5; }
+
+/* ---------- Theme 2: Civic Alert — poster black/yellow, bold type ---------- */
+.app[data-theme="civic"] {
+  --bg: #ffffff; --surface: #f4f4f0; --border: #111111; --text: #111111; --muted: #4b4b4b;
+  --primary: #ffd400; --primary-text: #111111;
+  font-family: "Helvetica Neue", Arial, sans-serif;
+}
+.app[data-theme="civic"] .topbar { background: #111; border-bottom: 4px solid #ffd400; }
+.app[data-theme="civic"] .brand h1 { color: #ffd400; text-transform: uppercase; font-weight: 900; letter-spacing: 0.04em; font-size: 20px; }
+.app[data-theme="civic"] .brand .sub { color: #d4d4d4; text-transform: uppercase; letter-spacing: 0.08em; font-size: 11px; }
+.app[data-theme="civic"] .panel { border-left: 3px solid #111; }
+.app[data-theme="civic"] .btn { border: 2px solid #111; border-radius: 0; text-transform: uppercase; letter-spacing: 0.04em; }
+.app[data-theme="civic"] .btn.primary { box-shadow: 4px 4px 0 #111; }
+.app[data-theme="civic"] .window input[type="range"] { accent-color: #111; }
+.app[data-theme="civic"] .leaflet-popup-content-wrapper { border-radius: 0; border: 2px solid #111; }
+
+/* ---------- Theme 3: Newsprint — cream paper, serif, ink colors ---------- */
+.app[data-theme="newsprint"] {
+  --bg: #f6f1e7; --surface: #efe7d6; --border: #cfc3ad; --text: #2b2622; --muted: #6e6257;
+  --primary: #8b1e1e; --primary-text: #fdf8ef;
+  font-family: Georgia, "Times New Roman", serif;
+}
+.app[data-theme="newsprint"] .topbar { background: #f6f1e7; border-bottom: 3px double #2b2622; justify-content: center; text-align: center; }
+.app[data-theme="newsprint"] .brand h1 { font-size: 24px; font-weight: 700; font-variant: small-caps; letter-spacing: 0.03em; }
+.app[data-theme="newsprint"] .brand .sub { font-style: italic; }
+.app[data-theme="newsprint"] .btn { border-radius: 2px; font-family: Georgia, serif; }
+.app[data-theme="newsprint"] .map canvas { filter: sepia(0.35) saturate(0.75) contrast(0.95); }
+.app[data-theme="newsprint"] .leaflet-popup-content-wrapper { background: #fbf7ee; border-radius: 2px; font-family: Georgia, serif; }
+
+/* ---------- Theme 4: Floating Glass — full-bleed map, translucent cards ---------- */
+.app[data-theme="glass"] { --bg: rgb(255 255 255 / 0.78); --surface: rgb(255 255 255 / 0.6); --border: rgb(15 23 42 / 0.1); --primary: #6d28d9; }
+.app[data-theme="glass"] .main { position: relative; }
+.app[data-theme="glass"] .map { position: absolute; inset: 0; }
+.app[data-theme="glass"] .topbar {
+  position: absolute; top: 12px; left: 60px; z-index: 500; border: 1px solid var(--border); border-radius: 14px;
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); box-shadow: 0 8px 30px rgb(15 23 42 / 0.12);
+}
+.app[data-theme="glass"] .panel {
+  position: absolute; top: 12px; right: 12px; bottom: 12px; z-index: 500; border: 1px solid var(--border); border-radius: 18px;
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); box-shadow: 0 12px 40px rgb(15 23 42 / 0.16);
+}
+.app[data-theme="glass"] .btn.primary { border-radius: 999px; }
+@media (max-width: 760px) {
+  .app[data-theme="glass"] .topbar { left: 56px; right: 12px; }
+  .app[data-theme="glass"] .panel { top: auto; left: 8px; right: 8px; bottom: 8px; width: auto; max-height: 45%; border-radius: 18px; }
+}
+
+/* ---------- Theme 5: Harbor — deep navy, teal accents, panel on the left ---------- */
+.app[data-theme="fiord"] {
+  --bg: #0f1e2e; --surface: #16293d; --border: #24405c; --text: #e3eef7; --muted: #8fa8bf;
+  --primary: #2ec4b6; --primary-text: #062421;
+  font-family: "Avenir Next", Avenir, "Segoe UI", sans-serif;
+}
+.app[data-theme="fiord"] .main { flex-direction: row-reverse; }
+.app[data-theme="fiord"] .panel { border-left: none; border-right: 1px solid var(--border); }
+.app[data-theme="fiord"] .topbar { background: #0b1724; }
+.app[data-theme="fiord"] .brand h1 { font-weight: 600; letter-spacing: 0.01em; }
+.app[data-theme="fiord"] .btn.primary { border-radius: 10px; }
+.app[data-theme="fiord"] .leaflet-popup-content-wrapper,
+.app[data-theme="fiord"] .leaflet-popup-tip { background: #16293d; color: #e3eef7; }
+.app[data-theme="fiord"] .popup-meta { color: #8fa8bf; }
+@media (max-width: 760px) { .app[data-theme="fiord"] .main { flex-direction: column; } }
+.app[data-theme="glass"] .leaflet-top.leaflet-left { top: 76px; }
+@media (max-width: 760px) {
+  .style-picker { flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; border-radius: 14px; bottom: 8px; }
+}
