@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { Fragment, useEffect, useMemo } from "react";
 import L from "leaflet";
 import { setWorkerUrl } from "maplibre-gl";
 import "@maplibre/maplibre-gl-leaflet";
@@ -62,7 +62,7 @@ const FRESH_HOURS = 7 * 24;
 /** Reports from the last 7 days are solid; anything older is a faint ghost pin. */
 function ageStyle(iso: string) {
   const hours = (Date.now() - Date.parse(iso)) / 3_600_000;
-  return hours > FRESH_HOURS ? { opacity: 0.3, stale: true } : { opacity: 0.95, stale: false };
+  return hours > FRESH_HOURS ? { opacity: 0.5, stale: true } : { opacity: 0.95, stale: false };
 }
 
 function formatWhen(iso: string) {
@@ -115,17 +115,29 @@ export default function MapView({ reports, center, zoom, draft, picking, flyTo, 
         const { opacity, stale } = ageStyle(r.observed_at);
         const sourceUrl = r.source_url && /^https?:\/\//i.test(r.source_url) ? r.source_url : null;
         const related = r.related_key ? (groups.get(r.related_key) ?? []).filter((o) => o.id !== r.id) : [];
+        // Confirmed reports (moderator-verified or rated confirmed by their source) get a bigger pin,
+        // a thick dark ring and a soft halo so they stand out even when old.
+        const confirmed = r.source === "moderator" || r.verification === "confirmed";
+        const radius = (confirmed ? 12 : 9) - (stale ? 2 : 0);
         return (
+          <Fragment key={r.id}>
+            {confirmed && (
+              <CircleMarker
+                center={[r.lat, r.lng]}
+                radius={radius + 6}
+                interactive={false}
+                pathOptions={{ stroke: false, fillColor: cat.color, fillOpacity: stale ? 0.15 : 0.25 }}
+              />
+            )}
           <CircleMarker
-            key={r.id}
             center={[r.lat, r.lng]}
-            radius={(r.source === "moderator" ? 11 : 9) - (stale ? 3 : 0)}
+            radius={radius}
             pathOptions={{
-              color: r.source === "moderator" ? "#111827" : "#ffffff",
-              weight: stale ? 1 : 2,
+              color: confirmed ? "#111827" : "#ffffff",
+              weight: confirmed ? 3 : stale ? 1 : 2,
               fillColor: cat.color,
               fillOpacity: opacity,
-              opacity: stale ? 0.5 : opacity,
+              opacity: confirmed ? Math.max(opacity, 0.8) : stale ? 0.7 : opacity,
             }}
           >
             <Popup>
@@ -157,6 +169,7 @@ export default function MapView({ reports, center, zoom, draft, picking, flyTo, 
               </div>
             </Popup>
           </CircleMarker>
+          </Fragment>
         );
       })}
 

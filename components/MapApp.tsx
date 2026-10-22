@@ -181,6 +181,19 @@ export default function MapApp({ appName, center, zoom, hotlineLabel, hotlineNum
                     <span className="count">{n}</span>
                   </li>
                 ))}
+                <li className="legend-key">
+                  <span className="dot ring" />
+                  Confirmed
+                  <span className="count">{reports.filter((r) => r.source === "moderator" || r.verification === "confirmed").length}</span>
+                </li>
+                <li className="legend-key">
+                  <span className="dot faint" />
+                  Older than 7 days
+                </li>
+                <li className="legend-key">
+                  <span className="line" />
+                  Related incidents
+                </li>
               </ul>
 
               <footer className="foot">

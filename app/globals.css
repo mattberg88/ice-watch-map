@@ -144,3 +144,8 @@ textarea { resize: vertical; }
 .muted, .empty { color: var(--muted); }
 .popup-related { margin-top: 8px; padding-top: 6px; border-top: 1px solid #e2e8f0; font-size: 12px; }
 .popup-related ul { margin: 4px 0 0; padding-left: 16px; }
+.legend-key { color: var(--muted, #64748b); font-size: 13px; }
+.legend-key:first-of-type { margin-top: 6px; padding-top: 8px; border-top: 1px solid var(--border, #e2e8f0); }
+.dot.ring { background: #94a3b8; box-shadow: 0 0 0 2px #111827, 0 0 0 5px rgba(148, 163, 184, 0.35); }
+.dot.faint { background: #dc2626; opacity: 0.5; }
+.legend .line { display: inline-block; width: 14px; border-top: 2px dashed #334155; margin-right: 2px; }
