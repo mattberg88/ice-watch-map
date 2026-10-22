@@ -54,4 +54,8 @@ if (prune) {
   `;
   pruned = gone.length;
 }
+await sql`
+  INSERT INTO sync_status (job, last_run_at, published) VALUES ('manual-import', now(), ${inserted})
+  ON CONFLICT (job) DO UPDATE SET last_run_at = now(), published = EXCLUDED.published
+`;
 console.log(`Imported ${inserted} new reports, updated ${updated}, pruned ${pruned}, skipped ${skipped} invalid.`);

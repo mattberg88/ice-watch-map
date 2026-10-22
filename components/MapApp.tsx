@@ -87,10 +87,10 @@ export default function MapApp({ appName, center, zoom, hotlineLabel, hotlineNum
     try {
       const res = await fetch(`/api/reports?hours=${hours}`, { cache: "no-store" });
       if (!res.ok) throw new Error();
-      const data = (await res.json()) as { reports: PublicReport[] };
+      const data = (await res.json()) as { reports: PublicReport[]; syncedAt: string | null };
       setReports(data.reports);
       setLoadError(false);
-      setLastUpdated(new Date().toISOString());
+      setLastUpdated(data.syncedAt);
     } catch {
       setLoadError(true);
     }
@@ -209,10 +209,10 @@ export default function MapApp({ appName, center, zoom, hotlineLabel, hotlineNum
                 </button>
               </div>
 
-              <p className="status">
+              <p className="status" title={lastUpdated ? `Data last updated ${new Date(lastUpdated).toLocaleString()}` : undefined}>
                 {loadError
                   ? "Couldn't load reports. Retrying…"
-                  : `${reports.length} report${reports.length === 1 ? "" : "s"}${lastUpdated ? ` · updated ${timeAgo(lastUpdated)}` : ""}`}
+                  : `${reports.length} report${reports.length === 1 ? "" : "s"}${lastUpdated ? ` · data updated ${timeAgo(lastUpdated)}` : ""}`}
               </p>
 
               <ul className="legend">

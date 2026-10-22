@@ -23,8 +23,13 @@ export async function GET(req: NextRequest) {
     LIMIT 3000
   `) as PublicReport[];
 
+  // When the data was last refreshed by a sync or import job (not when this request ran).
+  const [{ synced_at: syncedAt }] = (await db()`
+    SELECT max(last_run_at) AS synced_at FROM sync_status
+  `) as { synced_at: string | null }[];
+
   return NextResponse.json(
-    { reports: rows },
+    { reports: rows, syncedAt },
     { headers: { "Cache-Control": "public, s-maxage=30, stale-while-revalidate=30" } },
   );
 }

@@ -42,3 +42,10 @@ CREATE TABLE IF NOT EXISTS import_skips (
   reason      text NOT NULL,
   created_at  timestamptz NOT NULL DEFAULT now()
 );
+
+-- When each data job last ran (the hourly StopICE sync, manual imports). The map shows the latest.
+CREATE TABLE IF NOT EXISTS sync_status (
+  job         text PRIMARY KEY,
+  last_run_at timestamptz NOT NULL,
+  published   integer NOT NULL DEFAULT 0
+);

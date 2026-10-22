@@ -286,5 +286,9 @@ if (!DRY_RUN) {
   for (const [id, reason] of skips) {
     await sql`INSERT INTO import_skips (external_id, reason) VALUES (${id}, ${reason}) ON CONFLICT DO NOTHING`;
   }
+  await sql`
+    INSERT INTO sync_status (job, last_run_at, published) VALUES ('stopice', now(), ${published})
+    ON CONFLICT (job) DO UPDATE SET last_run_at = now(), published = EXCLUDED.published
+  `;
 }
 console.log(`StopICE ${feed}: ${candidates.length} recent Bay Area alerts, published ${published}, skipped ${skips.length}${DRY_RUN ? " (dry run)" : ""}.`);
