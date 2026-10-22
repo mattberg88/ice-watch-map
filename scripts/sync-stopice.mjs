@@ -51,7 +51,7 @@ const ARREST_EVENT = new RegExp(
     String.raw`|arrests? (happening|in progress|made|being made)|arresting|detention of|is being detained|were detained` +
     String.raw`|holding a patient|guarding a patient|hostage` +
     String.raw`|(an|one|two|three|confirmed|reported|another|the|workplace) arrests?|arrests? (at|outside|in|of|near)` +
-    String.raw`|se llevaron|se lo llevaron|se la llevaron|agarraron|detenid[oa]s?|deteniendo|arrest(o|ando|aron)|levantaron a)\b`,
+    String.raw`|se llevaron|se lo llevaron|se la llevaron|agarraron|detenid[oa]s?|deteniendo|detenci[oó]n(es)?|arrest(o|ando|aron)|levantaron a)\b`,
 );
 
 function categoryFor(text) {
@@ -61,7 +61,7 @@ function categoryFor(text) {
     .filter((s) => !/stay (vigilant|alert|safe)|is increasing|throughout|recent (kidnappings|arrests|raids)/.test(s))
     .join(" ");
   t = t.replace(
-    /\bno (one|kidnappings?|arrests?|detentions?)\b[^.]*|\b(preparing|getting ready|setting up) for [^.]*|\b(not sure|unclear|unconfirmed) if [^.]*/g,
+    /\bno (one|kidnappings?|arrests?|detentions?)\b[^.]*|\b(preparing|getting ready|setting up) for [^.]*|\b(not sure|unclear|unconfirmed) if [^.]*|\bno hubo (detenciones|arrestos)[^.]*|\bnadie (fue )?detenid[oa][^.]*|\bnobody was detained[^.]*|\bhace (\w+ )?d[ií]as hubo (una )?detenci[oó]n[^.]*|\bprepar(ando|[aá]ndose)( para| sus)? [^.]*/g,
     " ",
   );
   if (ARREST_EVENT.test(t)) return "detention";
