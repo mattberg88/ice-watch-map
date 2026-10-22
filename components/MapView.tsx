@@ -146,6 +146,9 @@ export default function MapView({ reports, center, zoom, draft, picking, flyTo, 
                 <div className="popup-meta">
                   {timeAgo(r.observed_at)} · {formatWhen(r.observed_at)}
                 </div>
+                {r.location_approximate && (
+                  <div className="popup-approx">Location may not be accurate. Check the source for the reported location.</div>
+                )}
                 {r.description && <p>{r.description}</p>}
                 <span className={`badge ${r.source} ${r.verification ?? ""}`}>{badgeText(r)}</span>
                 {sourceUrl && (

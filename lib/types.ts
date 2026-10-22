@@ -36,6 +36,8 @@ export interface Report {
   verification: Verification | null;
   /** Reports that describe the same event (e.g. an arrest and the hospital stay that followed) share this. */
   related_key: string | null;
+  /** The pin is a best guess from a city, ZIP or street; the source link has the original wording. */
+  location_approximate: boolean;
 }
 
 /** Public reports omit moderation fields. */

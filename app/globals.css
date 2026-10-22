@@ -149,3 +149,4 @@ textarea { resize: vertical; }
 .dot.ring { background: #94a3b8; box-shadow: 0 0 0 2px #111827, 0 0 0 5px rgba(148, 163, 184, 0.35); }
 .dot.faint { background: #dc2626; opacity: 0.5; }
 .legend .line { display: inline-block; width: 14px; border-top: 2px dashed #334155; margin-right: 2px; }
+.popup-approx { margin-top: 4px; font-size: 12px; color: #92400e; background: #fef3c7; border-radius: 4px; padding: 2px 6px; }

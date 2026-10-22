@@ -31,3 +31,6 @@ ALTER TABLE reports ADD CONSTRAINT reports_source_check CHECK (source IN ('commu
 -- Incidents that belong together (e.g. an arrest and the hospital where the person was taken) share a key.
 ALTER TABLE reports ADD COLUMN IF NOT EXISTS related_key text;
 CREATE INDEX IF NOT EXISTS reports_related_key_idx ON reports (related_key);
+
+-- True when the pin is a best guess (only a city, ZIP or street was given). The map labels these.
+ALTER TABLE reports ADD COLUMN IF NOT EXISTS location_approximate boolean NOT NULL DEFAULT false;

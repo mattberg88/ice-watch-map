@@ -1,7 +1,7 @@
 // Publishes reports gathered from other trackers (see research/build_map.py).
 // Usage: npm run db:import -- research/import.json [--prune]   (reads .env.local if present)
 // --prune deletes previously imported reports that are no longer in the file.
-// Each row: { external_id, category, description, lat, lng, observed_at, verification, source_name, source_url, related_key }
+// Each row: { external_id, category, description, lat, lng, observed_at, verification, source_name, source_url, related_key, location_approximate }
 // Rows already imported are updated in place, so re-running picks up corrected text or new links.
 import { readFile } from "node:fs/promises";
 import { neon } from "@neondatabase/serverless";
@@ -33,14 +33,15 @@ for (const r of rows) {
   const sourceUrl = /^https?:\/\//i.test(r.source_url ?? "") ? r.source_url : null;
   const result = await sql`
     INSERT INTO reports (category, description, lat, lng, observed_at, status, source, reviewed_at,
-                         source_name, source_url, verification, external_id, related_key)
+                         source_name, source_url, verification, external_id, related_key, location_approximate)
     VALUES (${r.category}, ${String(r.description ?? "").slice(0, 500)}, ${round(r.lat)}, ${round(r.lng)},
             ${r.observed_at}, 'approved', 'imported', now(),
             ${String(r.source_name ?? "").slice(0, 120)}, ${sourceUrl}, ${verification}, ${r.external_id},
-            ${r.related_key ? String(r.related_key).slice(0, 80) : null})
+            ${r.related_key ? String(r.related_key).slice(0, 80) : null}, ${r.location_approximate === true})
     ON CONFLICT (external_id) DO UPDATE SET
       category = EXCLUDED.category, description = EXCLUDED.description, verification = EXCLUDED.verification,
-      source_name = EXCLUDED.source_name, source_url = EXCLUDED.source_url, related_key = EXCLUDED.related_key
+      source_name = EXCLUDED.source_name, source_url = EXCLUDED.source_url, related_key = EXCLUDED.related_key,
+      lat = EXCLUDED.lat, lng = EXCLUDED.lng, location_approximate = EXCLUDED.location_approximate
     RETURNING (xmax = 0) AS inserted
   `;
   result[0].inserted ? inserted++ : updated++;
