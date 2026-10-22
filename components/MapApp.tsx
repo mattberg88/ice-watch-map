@@ -29,7 +29,19 @@ const WINDOWS = [
   { hours: 3 * 8760, label: "All (since May 2025)" },
 ];
 const DEFAULT_STOP = WINDOWS.findIndex((w) => w.hours === 720);
-const MAX_DAYS = WINDOWS[WINDOWS.length - 1].hours / 24;
+const MAX_HOURS = WINDOWS[WINDOWS.length - 1].hours;
+
+// Units for the typed range. A month is 730 hours (365 / 12 days), so 6 months and 1 year match slider stops.
+const UNITS = { hours: 1, days: 24, months: 730 } as const;
+type Unit = keyof typeof UNITS;
+
+/** Express a slider value in the most natural unit for the typed box. */
+function toAmount(hours: number): { amount: string; unit: Unit } {
+  if (hours >= MAX_HOURS) return { amount: "", unit: "months" };
+  if (hours < 24) return { amount: String(hours), unit: "hours" };
+  if (hours < 60 * 24 || hours % UNITS.months !== 0) return { amount: String(Math.round(hours / 24)), unit: "days" };
+  return { amount: String(hours / UNITS.months), unit: "months" };
+}
 
 /** Slider position closest to an arbitrary number of hours (for values typed into the days box). */
 function nearestStop(hours: number) {
@@ -40,9 +52,11 @@ function nearestStop(hours: number) {
   return best;
 }
 
-function formatDays(days: number) {
-  const d = Math.round(days * 10) / 10;
-  return `${d} day${d === 1 ? "" : "s"}`;
+function formatRange(hours: number) {
+  const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
+  if (hours < 24) return plural(hours, "hour");
+  if (hours % UNITS.months === 0) return plural(hours / UNITS.months, "month");
+  return plural(Math.round((hours / 24) * 10) / 10, "day");
 }
 const REFRESH_MS = 60_000;
 
@@ -60,7 +74,8 @@ export default function MapApp({ appName, center, zoom, hotlineLabel, hotlineNum
   // follows once input settles.
   const [pendingHours, setPendingHours] = useState(WINDOWS[DEFAULT_STOP].hours);
   const [hours, setHours] = useState(WINDOWS[DEFAULT_STOP].hours);
-  const [daysText, setDaysText] = useState(String(WINDOWS[DEFAULT_STOP].hours / 24));
+  const [amountText, setAmountText] = useState(toAmount(WINDOWS[DEFAULT_STOP].hours).amount);
+  const [unit, setUnit] = useState<Unit>(toAmount(WINDOWS[DEFAULT_STOP].hours).unit);
   const [theme, setTheme] = useState<ThemeId>(DEFAULT_THEME);
   const [showStylePicker, setShowStylePicker] = useState(false);
   const [loadError, setLoadError] = useState(false);
@@ -97,19 +112,22 @@ export default function MapApp({ appName, center, zoom, hotlineLabel, hotlineNum
   }, [pendingHours]);
 
   const stop = nearestStop(pendingHours);
-  const windowLabel = WINDOWS.find((w) => w.hours === pendingHours)?.label ?? formatDays(pendingHours / 24);
+  const windowLabel = WINDOWS.find((w) => w.hours === pendingHours)?.label ?? formatRange(pendingHours);
 
   function onSlide(index: number) {
     const h = WINDOWS[index].hours;
     setPendingHours(h);
-    setDaysText(h >= 24 && h < WINDOWS[WINDOWS.length - 1].hours ? String(Math.round(h / 24)) : "");
+    const next = toAmount(h);
+    setAmountText(next.amount);
+    setUnit(next.unit);
   }
 
-  function onDaysInput(text: string) {
-    setDaysText(text);
-    const days = Number(text);
-    if (text.trim() !== "" && Number.isFinite(days) && days > 0) {
-      setPendingHours(Math.min(Math.round(days * 24), WINDOWS[WINDOWS.length - 1].hours));
+  function applyAmount(text: string, nextUnit: Unit) {
+    setAmountText(text);
+    setUnit(nextUnit);
+    const n = Number(text);
+    if (text.trim() !== "" && Number.isFinite(n) && n > 0) {
+      setPendingHours(Math.min(Math.max(1, Math.round(n * UNITS[nextUnit])), MAX_HOURS));
     }
   }
 
@@ -231,20 +249,21 @@ export default function MapApp({ appName, center, zoom, hotlineLabel, hotlineNum
                     <span>All</span>
                   </span>
                 </label>
-                <label className="days-input">
+                <div className="days-input">
                   <input
-                    type="number"
-                    inputMode="numeric"
-                    min={1}
-                    max={MAX_DAYS}
-                    step={1}
-                    value={daysText}
-                    placeholder="days"
-                    onChange={(e) => onDaysInput(e.target.value)}
-                    aria-label="Days back"
+                    type="text"
+                    inputMode="decimal"
+                    value={amountText}
+                    placeholder="All"
+                    onChange={(e) => applyAmount(e.target.value.replace(/[^\d.]/g, ""), unit)}
+                    aria-label="How far back"
                   />
-                  <span>days back</span>
-                </label>
+                  <select value={unit} onChange={(e) => applyAmount(amountText, e.target.value as Unit)} aria-label="Unit">
+                    <option value="hours">hours back</option>
+                    <option value="days">days back</option>
+                    <option value="months">months back</option>
+                  </select>
+                </div>
                 <button className="btn primary" onClick={() => setFormOpen(true)}>
                   + Report
                 </button>
