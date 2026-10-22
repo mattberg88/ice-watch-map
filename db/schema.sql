@@ -27,3 +27,7 @@ ALTER TABLE reports ADD COLUMN IF NOT EXISTS external_id text;
 CREATE UNIQUE INDEX IF NOT EXISTS reports_external_id_idx ON reports (external_id);
 ALTER TABLE reports DROP CONSTRAINT IF EXISTS reports_source_check;
 ALTER TABLE reports ADD CONSTRAINT reports_source_check CHECK (source IN ('community', 'moderator', 'imported'));
+
+-- Incidents that belong together (e.g. an arrest and the hospital where the person was taken) share a key.
+ALTER TABLE reports ADD COLUMN IF NOT EXISTS related_key text;
+CREATE INDEX IF NOT EXISTS reports_related_key_idx ON reports (related_key);

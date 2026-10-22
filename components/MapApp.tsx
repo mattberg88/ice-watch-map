@@ -19,6 +19,11 @@ const WINDOWS = [
   { hours: 72, label: "3 days" },
   { hours: 168, label: "7 days" },
   { hours: 720, label: "30 days" },
+  { hours: 2160, label: "90 days" },
+  { hours: 4380, label: "6 months" },
+  { hours: 8760, label: "1 year" },
+  // The API caps this at its own maximum; imported history starts in May 2025.
+  { hours: 3 * 8760, label: "All (since May 2025)" },
 ];
 const REFRESH_MS = 60_000;
 
@@ -177,13 +182,6 @@ export default function MapApp({ appName, center, zoom, hotlineLabel, hotlineNum
                   </li>
                 ))}
               </ul>
-
-              <div className="notice">
-                <strong>Stay safe.</strong> Keep your distance, don&apos;t interfere with officers, and don&apos;t share
-                anyone&apos;s identity. Pins fade over 3 days, and older ones stay faint. Reports can be wrong. Pins with a dark
-                outline were verified by a moderator. Reports from other trackers (StopICE, iceout.org, news) are labeled
-                with their source and haven&apos;t been checked by us.
-              </div>
 
               <footer className="foot">
                 <a href="/admin">Moderator login</a>

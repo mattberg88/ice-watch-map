@@ -34,6 +34,8 @@ export interface Report {
   source_name: string | null;
   source_url: string | null;
   verification: Verification | null;
+  /** Reports that describe the same event (e.g. an arrest and the hospital stay that followed) share this. */
+  related_key: string | null;
 }
 
 /** Public reports omit moderation fields. */

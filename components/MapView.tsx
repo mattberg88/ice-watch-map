@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import L from "leaflet";
 import { setWorkerUrl } from "maplibre-gl";
 import "@maplibre/maplibre-gl-leaflet";
-import { CircleMarker, MapContainer, Popup, useMap, useMapEvents } from "react-leaflet";
+import { CircleMarker, MapContainer, Polyline, Popup, useMap, useMapEvents } from "react-leaflet";
 import { CATEGORIES, VERIFICATION_LABELS, type PublicReport } from "@/lib/types";
 import { timeAgo } from "@/lib/format";
 
@@ -38,7 +38,11 @@ function Basemap() {
     layer.options.attribution =
       '<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> &copy; <a href="https://www.openmaptiles.org/" target="_blank" rel="noopener">OpenMapTiles</a> Data from <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>';
     layer.addTo(map);
+    // Leaflet doesn't notice container resizes (phone rotation, panel changes), which leaves the GL canvas half drawn.
+    const resize = new ResizeObserver(() => map.invalidateSize());
+    resize.observe(map.getContainer());
     return () => {
+      resize.disconnect();
       map.removeLayer(layer);
     };
   }, [map]);
@@ -53,13 +57,30 @@ function FlyTo({ target }: { target: Props["flyTo"] }) {
   return null;
 }
 
-const FRESH_HOURS = 72;
+const FRESH_HOURS = 7 * 24;
 
-/** Reports fade over their first 3 days; anything older stays as a faint ghost pin. */
+/** Reports from the last 7 days are solid; anything older is a faint ghost pin. */
 function ageStyle(iso: string) {
   const hours = (Date.now() - Date.parse(iso)) / 3_600_000;
-  if (hours > FRESH_HOURS) return { opacity: 0.3, stale: true };
-  return { opacity: Math.max(0.45, 1 - (hours / FRESH_HOURS) * 0.55), stale: false };
+  return hours > FRESH_HOURS ? { opacity: 0.3, stale: true } : { opacity: 0.95, stale: false };
+}
+
+function formatWhen(iso: string) {
+  const olderThanADay = Date.now() - Date.parse(iso) > 86_400_000;
+  return new Date(iso).toLocaleString([], olderThanADay
+    ? { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" }
+    : { hour: "numeric", minute: "2-digit" });
+}
+
+/** Reports sharing a related_key, oldest first, so they can be joined with a line. */
+function relatedGroups(reports: PublicReport[]) {
+  const groups = new Map<string, PublicReport[]>();
+  for (const r of reports) {
+    if (!r.related_key) continue;
+    groups.set(r.related_key, [...(groups.get(r.related_key) ?? []), r]);
+  }
+  for (const list of groups.values()) list.sort((a, b) => Date.parse(a.observed_at) - Date.parse(b.observed_at));
+  return groups;
 }
 
 function badgeText(r: PublicReport) {
@@ -72,16 +93,28 @@ function badgeText(r: PublicReport) {
 }
 
 export default function MapView({ reports, center, zoom, draft, picking, flyTo, onPick }: Props) {
+  const groups = useMemo(() => relatedGroups(reports), [reports]);
   return (
     <MapContainer center={center} zoom={zoom} className={`map${picking ? " picking" : ""}`} zoomControl>
       <Basemap />
       <ClickToPick enabled={picking} onPick={onPick} />
       <FlyTo target={flyTo} />
 
+      {[...groups].map(([key, list]) =>
+        list.length > 1 ? (
+          <Polyline
+            key={key}
+            positions={list.map((r) => [r.lat, r.lng] as [number, number])}
+            pathOptions={{ color: "#334155", weight: 2, opacity: 0.7, dashArray: "6 6" }}
+          />
+        ) : null,
+      )}
+
       {reports.map((r) => {
         const cat = CATEGORIES[r.category];
         const { opacity, stale } = ageStyle(r.observed_at);
         const sourceUrl = r.source_url && /^https?:\/\//i.test(r.source_url) ? r.source_url : null;
+        const related = r.related_key ? (groups.get(r.related_key) ?? []).filter((o) => o.id !== r.id) : [];
         return (
           <CircleMarker
             key={r.id}
@@ -99,10 +132,7 @@ export default function MapView({ reports, center, zoom, draft, picking, flyTo, 
               <div className="popup">
                 <strong style={{ color: cat.color }}>{cat.label}</strong>
                 <div className="popup-meta">
-                  {timeAgo(r.observed_at)} ·{" "}
-                  {new Date(r.observed_at).toLocaleString([], stale
-                    ? { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }
-                    : { hour: "numeric", minute: "2-digit" })}
+                  {timeAgo(r.observed_at)} · {formatWhen(r.observed_at)}
                 </div>
                 {r.description && <p>{r.description}</p>}
                 <span className={`badge ${r.source} ${r.verification ?? ""}`}>{badgeText(r)}</span>
@@ -110,6 +140,19 @@ export default function MapView({ reports, center, zoom, draft, picking, flyTo, 
                   <a className="popup-source" href={sourceUrl} target="_blank" rel="noopener noreferrer">
                     Source
                   </a>
+                )}
+                {related.length > 0 && (
+                  <div className="popup-related">
+                    <strong>Related</strong>
+                    <ul>
+                      {related.map((o) => (
+                        <li key={o.id}>
+                          {formatWhen(o.observed_at)}: {o.description.slice(0, 90)}
+                          {o.description.length > 90 ? "…" : ""}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 )}
               </div>
             </Popup>

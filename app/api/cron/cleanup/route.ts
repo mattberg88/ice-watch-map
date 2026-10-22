@@ -13,9 +13,12 @@ export async function GET(req: NextRequest) {
 
   const days = Math.max(1, Number(process.env.RETENTION_DAYS ?? 30) || 30);
 
-  // Age is measured from when the activity happened, so imported reports expire on the same clock.
+  // Community and moderator reports expire by when the activity happened. Imported reports are kept as
+  // history: they're already public on the trackers they came from.
   const old = await db()`
-    DELETE FROM reports WHERE observed_at < now() - make_interval(days => ${days}) RETURNING id
+    DELETE FROM reports
+    WHERE source <> 'imported' AND observed_at < now() - make_interval(days => ${days})
+    RETURNING id
   `;
   // Rejected and stale pending reports don't need to stick around.
   const junk = await db()`
