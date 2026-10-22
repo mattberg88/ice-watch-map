@@ -2,11 +2,10 @@
 
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useState } from "react";
-import ReportForm from "./ReportForm";
 import ReportHelp from "./ReportHelp";
 import { CATEGORIES, CATEGORY_KEYS, type PublicReport } from "@/lib/types";
 import { timeAgo } from "@/lib/format";
-import { DEFAULT_THEME, THEMES, type ThemeId } from "@/lib/themes";
+import { DEFAULT_THEME, THEMES, categoryColor, type ThemeId } from "@/lib/themes";
 
 // Leaflet touches `window`, so the map only renders in the browser.
 const MapView = dynamic(() => import("./MapView"), {
@@ -81,14 +80,8 @@ export default function MapApp({ appName, center, zoom, hotlineLabel, hotlineNum
   const [showStylePicker, setShowStylePicker] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
-  // Only moderators can post from the map; everyone else is pointed to the county hotlines.
-  const [formOpen, setFormOpen] = useState(false);
+  // Reports are made to county hotlines, not on this site.
   const [helpOpen, setHelpOpen] = useState(false);
-  const [draft, setDraft] = useState<{ lat: number; lng: number } | null>(null);
-  const [flyTo, setFlyTo] = useState<{ lat: number; lng: number; key: number } | null>(null);
-  const [locating, setLocating] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -141,51 +134,6 @@ export default function MapApp({ appName, center, zoom, hotlineLabel, hotlineNum
     setShowStylePicker(params.has("styles") || params.has("style"));
   }, []);
 
-  useEffect(() => {
-    fetch("/api/admin/session")
-      .then((r) => r.json())
-      .then((d) => setIsAdmin(Boolean(d.admin)))
-      .catch(() => {});
-  }, []);
-
-  useEffect(() => {
-    if (!toast) return;
-    const id = setTimeout(() => setToast(null), 5000);
-    return () => clearTimeout(id);
-  }, [toast]);
-
-  function locate() {
-    if (!navigator.geolocation) {
-      setToast("Location isn't available in this browser. Tap the map instead.");
-      return;
-    }
-    setLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const point = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-        setDraft(point);
-        setFlyTo({ ...point, key: Date.now() });
-        setLocating(false);
-      },
-      () => {
-        setToast("Couldn't get your location. Tap the map instead.");
-        setLocating(false);
-      },
-      { enableHighAccuracy: true, timeout: 10_000 },
-    );
-  }
-
-  function closeForm() {
-    setFormOpen(false);
-    setDraft(null);
-  }
-
-  function handleSubmitted(published: boolean) {
-    closeForm();
-    setToast(published ? "Published to the map." : "Thanks. Your report will appear once a moderator reviews it.");
-    if (published) load();
-  }
-
   const counts = CATEGORY_KEYS.map((key) => ({ key, n: reports.filter((r) => r.category === key).length }));
 
   return (
@@ -208,24 +156,11 @@ export default function MapApp({ appName, center, zoom, hotlineLabel, hotlineNum
           reports={reports}
           center={center}
           zoom={zoom}
-          draft={draft}
-          picking={formOpen}
-          flyTo={flyTo}
-          onPick={(lat, lng) => setDraft({ lat, lng })}
           basemap={theme}
         />
 
         <aside className="panel">
-          {formOpen && isAdmin ? (
-            <ReportForm
-              draft={draft}
-              isAdmin={isAdmin}
-              onLocate={locate}
-              locating={locating}
-              onCancel={closeForm}
-              onSubmitted={handleSubmitted}
-            />
-          ) : helpOpen ? (
+          {helpOpen ? (
             <ReportHelp onClose={() => setHelpOpen(false)} />
           ) : (
             <>
@@ -269,11 +204,6 @@ export default function MapApp({ appName, center, zoom, hotlineLabel, hotlineNum
                     <option value="months">months back</option>
                   </select>
                 </div>
-                {isAdmin && (
-                  <button className="btn" onClick={() => setFormOpen(true)}>
-                    + Post
-                  </button>
-                )}
                 <button className="btn primary" onClick={() => setHelpOpen(true)}>
                   How to report
                 </button>
@@ -288,7 +218,7 @@ export default function MapApp({ appName, center, zoom, hotlineLabel, hotlineNum
               <ul className="legend">
                 {counts.map(({ key, n }) => (
                   <li key={key}>
-                    <span className="dot" style={{ background: CATEGORIES[key].color }} />
+                    <span className="dot" style={{ background: categoryColor(theme, key) }} />
                     {CATEGORIES[key].label}
                     <span className="count">{n}</span>
                   </li>
@@ -326,11 +256,6 @@ export default function MapApp({ appName, center, zoom, hotlineLabel, hotlineNum
         </div>
       )}
 
-      {toast && (
-        <div className="toast" role="status">
-          {toast}
-        </div>
-      )}
     </div>
   );
 }

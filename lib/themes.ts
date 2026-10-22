@@ -1,3 +1,5 @@
+import { CATEGORIES, type Category } from "./types";
+
 /**
  * Visual themes. Night Watch is the default; add `?styles` to the URL to show a picker, or `?style=<id>` to load one.
  * Each theme sets `data-theme` on the app root (see globals.css) and picks an OpenFreeMap basemap.
@@ -86,4 +88,19 @@ export async function loadBasemapStyle(theme: ThemeId): Promise<string | object>
   } catch {
     return url;
   }
+}
+
+/** Softer category colors for dark themes; the defaults in lib/types.ts are tuned for light maps. */
+const CATEGORY_COLORS: Partial<Record<ThemeId, Record<Category, string>>> = {
+  night: {
+    vehicle: "#d2a45f",
+    agents: "#d98a7c",
+    checkpoint: "#a996d8",
+    detention: "#c9809a",
+    other: "#8d9aab",
+  },
+};
+
+export function categoryColor(theme: ThemeId, category: Category) {
+  return CATEGORY_COLORS[theme]?.[category] ?? CATEGORIES[category].color;
 }

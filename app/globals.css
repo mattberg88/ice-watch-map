@@ -267,7 +267,7 @@ textarea { resize: vertical; }
 /* Night Watch, softened: charcoal instead of near-black, gentler text and accents, lifted basemap. */
 .app[data-theme="night"] {
   --bg: #1b2028; --surface: #232a34; --border: #323c48; --text: #d9dfe6; --muted: #9aa5b1;
-  --primary: #e5534b; --primary-text: #fff;
+  --primary: #6f9bcf; --primary-text: #0f1720;
 }
 .app[data-theme="night"] .topbar { background: #1b2028; border-bottom-color: #323c48; }
 .app[data-theme="night"] .leaflet-popup-content-wrapper,
@@ -279,12 +279,11 @@ textarea { resize: vertical; }
 .app[data-theme="night"] .popup-related { border-top-color: #323c48; }
 .app[data-theme="night"] .badge { background: #303946; color: #d9dfe6; }
 .app[data-theme="night"] .badge.imported { background: #2c3550; color: #c3cdf2; }
-.app[data-theme="night"] .badge.imported.confirmed, .app[data-theme="night"] .badge.moderator { background: #4a2a2a; color: #f2c4c0; }
-.app[data-theme="night"] .leaflet-popup-content-wrapper a { color: #f2a19b; }
+.app[data-theme="night"] .badge.imported.confirmed, .app[data-theme="night"] .badge.moderator { background: #3b3526; color: #e6d3a3; }
+.app[data-theme="night"] .leaflet-popup-content-wrapper a { color: #9cc0ea; }
 .app[data-theme="night"] .leaflet-bar a { background: #262e38; color: #d9dfe6; border-color: #323c48; }
 .app[data-theme="night"] .leaflet-control-attribution { background: rgb(27 32 40 / 0.8); color: #9aa5b1; }
-.app[data-theme="night"] .brand h1::before { color: #e5534b; }
-.app[data-theme="night"] .popup > strong { filter: brightness(1.55) saturate(0.9); }
+.app[data-theme="night"] .brand h1::before { color: #6f9bcf; }
 .days-input { display: flex; align-items: center; gap: 6px; margin-right: auto; }
 .days-input input { width: 64px; padding: 6px 8px; font-variant-numeric: tabular-nums; }
 .days-input select { width: auto; padding: 6px 8px; }
@@ -301,3 +300,5 @@ textarea { resize: vertical; }
 .hotline-meta { font-size: 12px; color: var(--muted); }
 .hotline-meta a { color: inherit; }
 .report-tips { margin: 0; padding-left: 18px; font-size: 13px; display: grid; gap: 4px; }
+.app[data-theme="night"] .dot.faint { background: #c9809a; }
+.panel-row > .btn.primary { flex-basis: 100%; }

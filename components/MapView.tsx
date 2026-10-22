@@ -4,30 +4,17 @@ import { Fragment, useEffect, useMemo, useRef } from "react";
 import L from "leaflet";
 import { setWorkerUrl } from "maplibre-gl";
 import "@maplibre/maplibre-gl-leaflet";
-import { CircleMarker, MapContainer, Polyline, Popup, useMap, useMapEvents } from "react-leaflet";
+import { CircleMarker, MapContainer, Polyline, Popup, useMap } from "react-leaflet";
 import { CATEGORIES, VERIFICATION_LABELS, type PublicReport } from "@/lib/types";
 import { timeAgo } from "@/lib/format";
-import { basemapUrl, loadBasemapStyle, type ThemeId } from "@/lib/themes";
+import { basemapUrl, categoryColor, loadBasemapStyle, type ThemeId } from "@/lib/themes";
 
 interface Props {
   reports: PublicReport[];
   center: [number, number];
   zoom: number;
-  draft: { lat: number; lng: number } | null;
-  picking: boolean;
-  flyTo: { lat: number; lng: number; key: number } | null;
-  onPick: (lat: number, lng: number) => void;
   /** Selected theme; picks and recolors the OpenFreeMap basemap. */
   basemap: ThemeId;
-}
-
-function ClickToPick({ enabled, onPick }: { enabled: boolean; onPick: Props["onPick"] }) {
-  useMapEvents({
-    click(e) {
-      if (enabled) onPick(e.latlng.lat, e.latlng.lng);
-    },
-  });
-  return null;
 }
 
 // Copied into public/ by scripts/copy-maplibre-worker.mjs; the bundler can't serve it.
@@ -70,14 +57,6 @@ function Basemap({ style }: { style: ThemeId }) {
   return null;
 }
 
-function FlyTo({ target }: { target: Props["flyTo"] }) {
-  const map = useMap();
-  useEffect(() => {
-    if (target) map.flyTo([target.lat, target.lng], Math.max(map.getZoom(), 15), { duration: 0.6 });
-  }, [map, target]);
-  return null;
-}
-
 const FRESH_HOURS = 7 * 24;
 
 /** Reports from the last 7 days are solid; anything older is a faint ghost pin. */
@@ -113,13 +92,11 @@ function badgeText(r: PublicReport) {
   return "Community report (reviewed)";
 }
 
-export default function MapView({ reports, center, zoom, draft, picking, flyTo, onPick, basemap }: Props) {
+export default function MapView({ reports, center, zoom, basemap }: Props) {
   const groups = useMemo(() => relatedGroups(reports), [reports]);
   return (
-    <MapContainer center={center} zoom={zoom} className={`map${picking ? " picking" : ""}`} zoomControl>
+    <MapContainer center={center} zoom={zoom} className="map" zoomControl>
       <Basemap style={basemap} />
-      <ClickToPick enabled={picking} onPick={onPick} />
-      <FlyTo target={flyTo} />
 
       {[...groups].map(([key, list]) =>
         list.length > 1 ? (
@@ -132,7 +109,7 @@ export default function MapView({ reports, center, zoom, draft, picking, flyTo, 
       )}
 
       {reports.map((r) => {
-        const cat = CATEGORIES[r.category];
+        const cat = { ...CATEGORIES[r.category], color: categoryColor(basemap, r.category) };
         const { opacity, stale } = ageStyle(r.observed_at);
         const sourceUrl = r.source_url && /^https?:\/\//i.test(r.source_url) ? r.source_url : null;
         const related = r.related_key ? (groups.get(r.related_key) ?? []).filter((o) => o.id !== r.id) : [];
@@ -199,13 +176,6 @@ export default function MapView({ reports, center, zoom, draft, picking, flyTo, 
         );
       })}
 
-      {draft && (
-        <CircleMarker
-          center={[draft.lat, draft.lng]}
-          radius={12}
-          pathOptions={{ color: "#2563eb", weight: 3, dashArray: "4 4", fillColor: "#3b82f6", fillOpacity: 0.3 }}
-        />
-      )}
     </MapContainer>
   );
 }
