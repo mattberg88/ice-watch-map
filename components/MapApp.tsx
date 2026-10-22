@@ -6,6 +6,7 @@ import ReportHelp from "./ReportHelp";
 import { CATEGORIES, CATEGORY_KEYS, type PublicReport } from "@/lib/types";
 import { timeAgo } from "@/lib/format";
 import { DEFAULT_THEME, THEMES, categoryColor, type ThemeId } from "@/lib/themes";
+import { SOURCE_ORDER, sourceGroups } from "@/lib/sources";
 
 // Leaflet touches `window`, so the map only renders in the browser.
 const MapView = dynamic(() => import("./MapView"), {
@@ -50,19 +51,6 @@ function nearestStop(hours: number) {
     if (Math.abs(Math.log(WINDOWS[i].hours / hours)) < Math.abs(Math.log(WINDOWS[best].hours / hours))) best = i;
   }
   return best;
-}
-
-const SOURCE_ORDER = ["StopICE", "Mission Local", "People Over Papers", "News"];
-
-/** Groups a report's source(s) for the filter: "Mission Local + StopICE" belongs to both. */
-function sourceGroups(r: PublicReport): string[] {
-  if (r.source !== "imported" || !r.source_name) return ["This site"];
-  return r.source_name.split(" + ").map((name) => {
-    if (name.startsWith("StopICE")) return "StopICE";
-    if (name.startsWith("News")) return "News";
-    if (name.startsWith("People Over Papers")) return "People Over Papers";
-    return name;
-  });
 }
 
 /** "in the last 30 days" / "since May 2025", for the count under the slider. */

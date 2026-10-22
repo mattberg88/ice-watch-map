@@ -4,10 +4,11 @@ import { Fragment, useEffect, useMemo, useRef } from "react";
 import L from "leaflet";
 import { setWorkerUrl } from "maplibre-gl";
 import "@maplibre/maplibre-gl-leaflet";
-import { CircleMarker, MapContainer, Polyline, Popup, useMap } from "react-leaflet";
+import { CircleMarker, MapContainer, Pane, Polyline, Popup, useMap } from "react-leaflet";
 import { CATEGORIES, VERIFICATION_LABELS, type PublicReport } from "@/lib/types";
 import { timeAgo } from "@/lib/format";
 import { basemapUrl, categoryColor, loadBasemapStyle, type ThemeId } from "@/lib/themes";
+import { PIN_PANES, pinPane } from "@/lib/sources";
 
 interface Props {
   reports: PublicReport[];
@@ -124,8 +125,14 @@ export default function MapView({ reports, center, zoom, basemap }: Props) {
         ) : null,
       )}
 
+      {/* One pane per source tier so news pins draw above People Over Papers, which draw above StopICE. */}
+      {PIN_PANES.map((p) => (
+        <Pane key={p.name} name={p.name} style={{ zIndex: p.zIndex }} />
+      ))}
+
       {reports.map((r) => {
         const cat = { ...CATEGORIES[r.category], color: categoryColor(basemap, r.category) };
+        const pane = pinPane(r);
         const { opacity, stale } = ageStyle(r.observed_at);
         const sourceUrl = r.source_url && /^https?:\/\//i.test(r.source_url) ? r.source_url : null;
         const related = r.related_key ? (groups.get(r.related_key) ?? []).filter((o) => o.id !== r.id) : [];
@@ -139,6 +146,7 @@ export default function MapView({ reports, center, zoom, basemap }: Props) {
               <CircleMarker
                 center={[r.lat, r.lng]}
                 radius={radius + 6}
+                pane={pane}
                 interactive={false}
                 pathOptions={{ stroke: false, fillColor: cat.color, fillOpacity: stale ? 0.15 : 0.25 }}
               />
@@ -146,6 +154,7 @@ export default function MapView({ reports, center, zoom, basemap }: Props) {
           <CircleMarker
             center={[r.lat, r.lng]}
             radius={radius}
+            pane={pane}
             pathOptions={{
               color: confirmed ? "#111827" : "#ffffff",
               // Themes can recolor the confirmed ring via CSS (dark maps need a light ring).
