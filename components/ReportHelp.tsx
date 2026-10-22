@@ -39,6 +39,25 @@ export default function ReportHelp({ onClose }: { onClose: () => void }) {
         <li>Whether anyone has been detained</li>
       </ul>
 
+      <h3>Then alert people nearby</h3>
+      <div className="stopice">
+        <p>
+          <a href="https://www.stopice.net/" target="_blank" rel="noopener noreferrer">
+            StopICE
+          </a>{" "}
+          sends anonymous alerts to people signed up in the area. Reports there also appear on this map within about an
+          hour.
+        </p>
+        <div className="stopice-actions">
+          <a className="btn" href="sms:8773222299?&body=REPORT">
+            Text REPORT to 877-322-2299
+          </a>
+          <a className="btn" href="https://www.stopice.net/" target="_blank" rel="noopener noreferrer">
+            Send an alert online
+          </a>
+        </div>
+      </div>
+
       <div className="actions">
         <button className="btn" onClick={onClose}>
           Back to map

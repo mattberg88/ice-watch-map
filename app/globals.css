@@ -302,3 +302,6 @@ textarea { resize: vertical; }
 .report-tips { margin: 0; padding-left: 18px; font-size: 13px; display: grid; gap: 4px; }
 .app[data-theme="night"] .dot.faint { background: #c9809a; }
 .panel-row > .btn.primary { flex-basis: 100%; }
+.stopice p { margin: 0 0 8px; font-size: 13px; color: var(--muted); }
+.stopice-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.stopice-actions .btn { text-decoration: none; font-size: 13px; padding: 7px 12px; }
