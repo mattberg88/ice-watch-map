@@ -45,8 +45,7 @@ export default function ReportHelp({ onClose }: { onClose: () => void }) {
           <a href="https://www.stopice.net/" target="_blank" rel="noopener noreferrer">
             StopICE
           </a>{" "}
-          sends anonymous alerts to people signed up in the area. Reports there also appear on this map within about an
-          hour.
+          sends anonymous alerts to people signed up in the area. Reports there are also added to this map.
         </p>
         <div className="stopice-actions">
           <a className="btn" href="sms:8773222299?&body=REPORT">
