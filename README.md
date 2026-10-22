@@ -1,4 +1,4 @@
-# Community Watch Map
+# ICE Watch Bay Area
 
 A Next.js app that maps reported ICE activity in the Bay Area, pulled from community trackers (StopICE, People Over Papers, news) and labeled with each report's source. People are pointed to county rapid response hotlines to report activity. It uses Leaflet with an OpenFreeMap basemap, Neon Postgres for storage, and deploys to Vercel.
 

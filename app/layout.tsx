@@ -3,11 +3,11 @@ import "leaflet/dist/leaflet.css";
 import "maplibre-gl/dist/maplibre-gl.css";
 import "./globals.css";
 
-const appName = process.env.NEXT_PUBLIC_APP_NAME || "Community Watch Map";
+const appName = process.env.NEXT_PUBLIC_APP_NAME || "ICE Watch Bay Area";
 
 export const metadata: Metadata = {
   title: appName,
-  description: "Community-reported, moderator-reviewed map of immigration enforcement activity.",
+  description: "Map of reported ICE activity in the Bay Area from community trackers and local news, with know-your-rights information.",
   robots: { index: false, follow: false },
 };
 
