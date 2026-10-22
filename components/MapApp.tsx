@@ -272,6 +272,16 @@ export default function MapApp({ appName, center, zoom, hotlineLabel, hotlineNum
                   <span className="count">{reports.filter((r) => r.source === "moderator" || r.verification === "confirmed").length}</span>
                 </li>
                 <li className="legend-key">
+                  <span className="dot solid" />
+                  Sighting
+                  <span className="count">{visible.filter((r) => r.verification === "sighting" || r.verification === "prior").length}</span>
+                </li>
+                <li className="legend-key">
+                  <span className="dot hollow" />
+                  Unconfirmed
+                  <span className="count">{visible.filter((r) => r.verification === "unconfirmed").length}</span>
+                </li>
+                <li className="legend-key">
                   <span className="dot faint" />
                   Older than 7 days
                 </li>

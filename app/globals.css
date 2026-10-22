@@ -282,3 +282,7 @@ textarea { resize: vertical; }
 }
 .chip .chip-count { color: var(--muted); font-weight: 500; font-variant-numeric: tabular-nums; }
 .chip.off { border-color: var(--border); color: var(--muted); text-decoration: line-through; opacity: 0.7; }
+.dot.solid { background: #94a3b8; border: 1.5px solid #0b0f14; box-shadow: none; }
+.dot.hollow { background: rgba(148, 163, 184, 0.2); border: 2px dashed #94a3b8; box-shadow: none; }
+.app[data-theme="night"] .dot.solid { background: #c3ccd6; }
+.app[data-theme="night"] .dot.hollow { background: rgba(195, 204, 214, 0.15); border-color: #c3ccd6; }

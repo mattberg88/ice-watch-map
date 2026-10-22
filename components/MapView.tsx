@@ -92,6 +92,32 @@ function relatedGroups(reports: PublicReport[]) {
   return groups;
 }
 
+/**
+ * Pin look by how the source rated the report, so the three read differently at a glance:
+ * confirmed = large, solid, light ring (plus a halo); reported (sighting / earlier incident) = solid with a
+ * thin dark edge; unconfirmed = smaller, hollow, dashed outline.
+ */
+function pinStyle(kind: "confirmed" | "reported" | "unconfirmed", color: string, opacity: number, stale: boolean) {
+  const shrink = stale ? 2 : 0;
+  if (kind === "confirmed") {
+    return {
+      radius: 12 - shrink,
+      // Themes can recolor the confirmed ring via CSS (dark maps need a light ring).
+      path: { color: "#111827", className: "pin-confirmed", weight: 3, fillColor: color, fillOpacity: opacity, opacity: Math.max(opacity, 0.8) },
+    };
+  }
+  if (kind === "unconfirmed") {
+    return {
+      radius: 8 - shrink,
+      path: { color, weight: 2.5, dashArray: "4 3", fillColor: color, fillOpacity: opacity * 0.35, opacity: Math.max(opacity, 0.75) },
+    };
+  }
+  return {
+    radius: 9 - shrink,
+    path: { color: "#0b0f14", weight: 1.5, fillColor: color, fillOpacity: opacity, opacity: Math.max(opacity, 0.6) },
+  };
+}
+
 function badgeText(r: PublicReport) {
   if (r.source === "moderator") return "Verified by moderator";
   if (r.source === "imported") {
@@ -139,13 +165,14 @@ export default function MapView({ reports, center, zoom, basemap }: Props) {
         // Confirmed reports (moderator-verified or rated confirmed by their source) get a bigger pin,
         // a thick dark ring and a soft halo so they stand out even when old.
         const confirmed = r.source === "moderator" || r.verification === "confirmed";
-        const radius = (confirmed ? 12 : 9) - (stale ? 2 : 0);
+        const unconfirmed = !confirmed && r.verification === "unconfirmed";
+        const style = pinStyle(confirmed ? "confirmed" : unconfirmed ? "unconfirmed" : "reported", cat.color, opacity, stale);
         return (
           <Fragment key={r.id}>
             {confirmed && (
               <CircleMarker
                 center={[r.lat, r.lng]}
-                radius={radius + 6}
+                radius={style.radius + 6}
                 pane={pane}
                 interactive={false}
                 pathOptions={{ stroke: false, fillColor: cat.color, fillOpacity: stale ? 0.15 : 0.25 }}
@@ -153,16 +180,10 @@ export default function MapView({ reports, center, zoom, basemap }: Props) {
             )}
           <CircleMarker
             center={[r.lat, r.lng]}
-            radius={radius}
+            radius={style.radius}
             pane={pane}
             pathOptions={{
-              color: confirmed ? "#111827" : "#ffffff",
-              // Themes can recolor the confirmed ring via CSS (dark maps need a light ring).
-              className: confirmed ? "pin-confirmed" : undefined,
-              weight: confirmed ? 3 : stale ? 1 : 2,
-              fillColor: cat.color,
-              fillOpacity: opacity,
-              opacity: confirmed ? Math.max(opacity, 0.8) : stale ? 0.7 : opacity,
+              ...style.path,
             }}
           >
             <Popup>
