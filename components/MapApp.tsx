@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useState } from "react";
 import ReportForm from "./ReportForm";
+import ReportHelp from "./ReportHelp";
 import { CATEGORIES, CATEGORY_KEYS, type PublicReport } from "@/lib/types";
 import { timeAgo } from "@/lib/format";
 import { DEFAULT_THEME, THEMES, type ThemeId } from "@/lib/themes";
@@ -80,7 +81,9 @@ export default function MapApp({ appName, center, zoom, hotlineLabel, hotlineNum
   const [showStylePicker, setShowStylePicker] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+  // Only moderators can post from the map; everyone else is pointed to the county hotlines.
   const [formOpen, setFormOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const [draft, setDraft] = useState<{ lat: number; lng: number } | null>(null);
   const [flyTo, setFlyTo] = useState<{ lat: number; lng: number; key: number } | null>(null);
   const [locating, setLocating] = useState(false);
@@ -213,7 +216,7 @@ export default function MapApp({ appName, center, zoom, hotlineLabel, hotlineNum
         />
 
         <aside className="panel">
-          {formOpen ? (
+          {formOpen && isAdmin ? (
             <ReportForm
               draft={draft}
               isAdmin={isAdmin}
@@ -222,6 +225,8 @@ export default function MapApp({ appName, center, zoom, hotlineLabel, hotlineNum
               onCancel={closeForm}
               onSubmitted={handleSubmitted}
             />
+          ) : helpOpen ? (
+            <ReportHelp onClose={() => setHelpOpen(false)} />
           ) : (
             <>
               <div className="panel-row">
@@ -264,8 +269,13 @@ export default function MapApp({ appName, center, zoom, hotlineLabel, hotlineNum
                     <option value="months">months back</option>
                   </select>
                 </div>
-                <button className="btn primary" onClick={() => setFormOpen(true)}>
-                  + Report
+                {isAdmin && (
+                  <button className="btn" onClick={() => setFormOpen(true)}>
+                    + Post
+                  </button>
+                )}
+                <button className="btn primary" onClick={() => setHelpOpen(true)}>
+                  How to report
                 </button>
               </div>
 

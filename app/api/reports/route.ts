@@ -1,13 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { db } from "@/lib/db";
-import { clientIp, hashIp, isAdmin } from "@/lib/auth";
+import { isAdmin } from "@/lib/auth";
 import { newReportSchema, personalDetailIssue, roundCoord } from "@/lib/validation";
 import type { PublicReport } from "@/lib/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-const MAX_REPORTS_PER_HOUR = 5;
 
 // Imported history reaches back to 2025; three years leaves room to grow.
 const MAX_HOURS = 3 * 365 * 24;
@@ -31,9 +29,16 @@ export async function GET(req: NextRequest) {
   );
 }
 
-// POST /api/reports — community submissions go to the moderation queue;
-// moderator submissions are published immediately.
+// POST /api/reports — moderators only; their reports are published immediately. The public is pointed to
+// county rapid response hotlines instead (see lib/hotlines.ts).
 export async function POST(req: NextRequest) {
+  if (!(await isAdmin())) {
+    return NextResponse.json(
+      { error: "Please report ICE activity to your county's rapid response hotline." },
+      { status: 403 },
+    );
+  }
+
   let body: unknown;
   try {
     body = await req.json();
@@ -55,27 +60,11 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const admin = await isAdmin();
-  const ipHash = hashIp(clientIp(req.headers));
-
-  if (!admin) {
-    const [{ count }] = (await db()`
-      SELECT count(*)::int AS count FROM reports
-      WHERE ip_hash = ${ipHash} AND created_at > now() - interval '1 hour'
-    `) as { count: number }[];
-    if (count >= MAX_REPORTS_PER_HOUR) {
-      return NextResponse.json({ error: "Too many reports. Try again later." }, { status: 429 });
-    }
-  }
-
-  const status = admin ? "approved" : "pending";
-  const source = admin ? "moderator" : "community";
-
   const [row] = (await db()`
-    INSERT INTO reports (category, description, lat, lng, observed_at, status, source, reviewed_at, ip_hash)
+    INSERT INTO reports (category, description, lat, lng, observed_at, status, source, reviewed_at)
     VALUES (
       ${report.category}, ${report.description}, ${roundCoord(report.lat)}, ${roundCoord(report.lng)},
-      ${report.observedAt}, ${status}, ${source}, ${admin ? new Date().toISOString() : null}, ${ipHash}
+      ${report.observedAt}, 'approved', 'moderator', now()
     )
     RETURNING id, status
   `) as { id: string; status: string }[];

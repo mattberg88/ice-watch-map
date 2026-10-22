@@ -5,8 +5,8 @@ A Next.js app for mapping reported ICE activity. Anyone can submit a sighting. M
 ## How it works
 
 - **Public map (`/`)**: shows approved reports from the last 2 hours to 30 days, colored by category. Pins fade over their first 3 days and older ones stay faint. Pins verified by a moderator get a dark outline, and reports imported from other trackers are labeled with their source and rating. The map refreshes every minute.
-- **Submitting**: tap **+ Report**, then tap the map or use **Use my location**, pick a category and time, and add optional details. Community reports go into a pending queue.
-- **Moderation (`/admin`)**: log in with the password, then approve, reject, unpublish or delete reports. While you're logged in, reports you submit from the map are published right away as "verified."
+- **Reporting**: **How to report** lists the Bay Area county rapid response hotlines (`lib/hotlines.ts`), which verify reports and send legal observers. The public can't submit reports on the site.
+- **Moderation (`/admin`)**: log in with the password, then approve, reject, unpublish or delete reports. While you're logged in, **+ Post** on the map publishes a verified report right away.
 - **Cleanup**: a daily Vercel Cron job deletes reports whose activity is older than `RETENTION_DAYS` (30 by default), plus rejected reports and pending ones that sat in the queue.
 
 ### Built-in privacy and safety measures
