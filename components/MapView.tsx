@@ -54,10 +54,12 @@ export default function MapView({ reports, center, zoom, draft, picking, flyTo, 
   return (
     <MapContainer center={center} zoom={zoom} className={`map${picking ? " picking" : ""}`} zoomControl>
       <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-        maxZoom={19}
-        // OSM blocks tile requests with no Referer. The site-wide policy is no-referrer,
+        attribution='&copy; <a href="https://stadiamaps.com/">Stadia Maps</a> &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        // A muted style without terrain symbols. Works on localhost; production domains must be
+        // registered (free) in the Stadia Maps dashboard.
+        url="https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png"
+        maxZoom={20}
+        // Stadia authorizes by domain. The site-wide policy is no-referrer,
         // so send just the origin (never the page path) for tiles only.
         referrerPolicy="strict-origin-when-cross-origin"
       />
